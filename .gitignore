@@ -10,3 +10,7 @@ obj/
 
 # macOS
 .DS_Store
+
+# Secrets
+*.secrets.json
+google-credentials*
