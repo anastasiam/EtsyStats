@@ -1,0 +1,12 @@
+# Git
+.git/
+
+# .Net
+bin/
+obj/
+
+# Rider
+.idea/
+
+# macOS
+.DS_Store
