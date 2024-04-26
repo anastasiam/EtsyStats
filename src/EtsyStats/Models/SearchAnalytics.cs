@@ -1,6 +1,6 @@
 namespace EtsyStats.Models;
 
-public class SearchQueryAnalytics
+public class SearchAnalytics
 {
     public string SearchQuery { get; set; }
     public string Impressions { get; set; }

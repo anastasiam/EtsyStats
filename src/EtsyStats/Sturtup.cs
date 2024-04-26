@@ -5,6 +5,6 @@ public static class Startup
     public static void SetupLogs()
     {
         Directory.CreateDirectory("logs");
-        File.WriteAllText("logs/logs.txt", $"\n\n------------{DateTime.Now}------------");
+        File.WriteAllText("logs/logs.txt", $"\r\n------------{DateTime.Now}------------\r\n");
     }
 }

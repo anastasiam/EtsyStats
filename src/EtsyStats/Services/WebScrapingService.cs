@@ -5,11 +5,11 @@ using OpenQA.Selenium.Support.UI;
 
 namespace EtsyStats.Services;
 
-public class WebsiteScrapingService
+public class WebScrapingService
 {
     private readonly ChromeDriver _chromeDriver;
 
-    public WebsiteScrapingService(ChromeDriver chromeDriver)
+    public WebScrapingService(ChromeDriver chromeDriver)
     {
         _chromeDriver = chromeDriver;
     }
@@ -26,7 +26,15 @@ public class WebsiteScrapingService
         return await ClickAndWaitForElementTextToChange(nextButtonXPath, tableCellXPath);
     }
 
-    public async Task<bool> ClickAndWaitForElementTextToChange(string buttonXpath, string elementXPath)
+    public async Task<string?> NavigateAndLoadHtmlFromUrl(string url, string elementToLoadXPath, string? errorElementXPath = null)
+    {
+        await _chromeDriver.NavigateToUrlWithDelay(url);
+        var isErrorPage = WaitForElementToLoad(elementToLoadXPath, errorElementXPath);
+
+        return isErrorPage ? null : _chromeDriver.PageSource;
+    }
+
+    private async Task<bool> ClickAndWaitForElementTextToChange(string buttonXpath, string elementXPath)
     {
         var initialText = _chromeDriver.FindElement(By.XPath(elementXPath)).Text;
         await _chromeDriver.ClickWithDelay(buttonXpath);
@@ -34,15 +42,7 @@ public class WebsiteScrapingService
         return WaitForElementTextToChange(elementXPath, initialText);
     }
 
-    public async Task<string?> NavigateAndLoadHtmlFromUrl(string url, string elementToLoadXPath, string? errorElementXPath = null)
-    {
-        await _chromeDriver.NavigateToUrlWithDelay(url);
-        var isError = WaitForElementToLoad(elementToLoadXPath, errorElementXPath);
-
-        return isError ? null : _chromeDriver.PageSource;
-    }
-
-    public bool WaitForElementTextToChange(string elementXPath, string initialText)
+    private bool WaitForElementTextToChange(string elementXPath, string initialText)
     {
         var wait = new WebDriverWait(_chromeDriver, TimeSpan.FromSeconds(Settings.WaitDelayInSeconds));
         var textChanged = wait.Until(c => c.FindElement(By.XPath(elementXPath)).Text != initialText);
@@ -50,7 +50,7 @@ public class WebsiteScrapingService
         return textChanged;
     }
 
-    public bool WaitForElementToLoad(string elementToLoadXPath, string? errorElementXPath = null)
+    private bool WaitForElementToLoad(string elementToLoadXPath, string? errorElementXPath = null)
     {
         var wait = new WebDriverWait(_chromeDriver, TimeSpan.FromSeconds(Settings.WaitDelayInSeconds));
         wait.Until(c => c.FindElement(By.XPath(elementToLoadXPath))

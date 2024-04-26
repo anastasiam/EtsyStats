@@ -21,7 +21,9 @@ ProgramHelper.OriginalOut = Console.Out;
 Console.SetOut(TextWriter.Null);
 Console.WriteLine("You should not see this");
 #endif
+
 Startup.SetupLogs();
+
 var googleSheetService = new GoogleSheetService();
 var etsyParser = new EtsyParser(chromeLocation);
 do
@@ -77,12 +79,8 @@ do
     }
     catch (Exception e)
     {
-        await File.AppendAllTextAsync("logs/logs.txt", $"\n\n{e.GetBaseException()}");
-
-#if DEBUG
-        ProgramHelper.OriginalOut.WriteLine($"\n\n{e.GetBaseException()}");
-#endif
         ProgramHelper.OriginalOut.WriteLine("\nAn error occured. See logs/logs.txt.");
+        await Log.Error(e.GetBaseException().ToString());
 
         Console.ReadLine();
     }

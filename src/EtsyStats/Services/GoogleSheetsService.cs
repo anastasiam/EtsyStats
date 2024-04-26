@@ -89,7 +89,7 @@ public class GoogleSheetService
         ProgramHelper.OriginalOut.WriteLine($@"\nUpdated rows:{response.UpdatedRows}");
     }
 
-    public async Task WriteSearchAnalyticsToSheet(string sheetId, string shop, List<SearchQueryAnalytics> searchQueriesAnalytics)
+    public async Task WriteSearchAnalyticsToSheet(string sheetId, string shop, List<SearchAnalytics> searchQueriesAnalytics)
     {
         var tabName = $"{shop} - Analytics";
         var service = GetSheetsService();
@@ -114,7 +114,7 @@ public class GoogleSheetService
         }
     }
 
-    private async Task WriteSearchAnalyticsToSheet(SheetsService service, string sheetId, string tabName, List<SearchQueryAnalytics> searchQueriesAnalytics)
+    private async Task WriteSearchAnalyticsToSheet(SheetsService service, string sheetId, string tabName, List<SearchAnalytics> searchQueriesAnalytics)
     {
         var valuesResource = service.Spreadsheets.Values;
         var clear = valuesResource.Clear(new ClearValuesRequest(), sheetId, $"{tabName}!1:1000");

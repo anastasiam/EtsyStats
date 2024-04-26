@@ -6,6 +6,7 @@ public static class SearchAnalyticsPageXPaths
     public const string TableRow = $"{Table}/tbody/tr";
     public const string SearchQueryFirstTableCellFullXPath = $"{TableRow}[1]/{SearchQueryTableCell}";
 
+    // TODO ue column names instead of column index
     public const string SearchQueryTableCell = "td[1]/a/span[2]";
     public const string ImpressionsTableCell = "td[2]";
     public const string PositionTableCell = "td[3]";
