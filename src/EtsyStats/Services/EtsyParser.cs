@@ -79,7 +79,7 @@ public class EtsyParser
                 await File.AppendAllTextAsync("logs/last_search_analytics.html", _chromeDriver.PageSource);
                 throw;
             }
-            
+
             page++;
         } while (await _webScrapingService.NextPage(string.Empty, SearchAnalyticsPageXPaths.SearchQueryFirstTableCellFullXPath));
 
@@ -142,7 +142,7 @@ public class EtsyParser
     private static void ParseStatsPageGeneralData(ListingStats listing, HtmlDocument htmlDoc)
     {
         var statsDataDropdown = htmlDoc.DocumentNode.SelectSingleNode(ListingStatsPageXPaths.GeneralDataDropdown);
-        
+
         listing.Visits = decimal.Parse(statsDataDropdown.SelectSingleNode(ListingStatsPageXPaths.VisitsDropdownElement).InnerText.Trim());
         listing.TotalViews = decimal.Parse(statsDataDropdown.SelectSingleNode(ListingStatsPageXPaths.TotalViewsDropdownElement).InnerText.Trim());
         listing.Orders = decimal.Parse(statsDataDropdown.SelectSingleNode(ListingStatsPageXPaths.OrdersDropdownElement).InnerText.Trim());
@@ -152,7 +152,7 @@ public class EtsyParser
     private static void ParseStatsPageTrafficSources(ListingStats listing, HtmlDocument htmlDoc)
     {
         var trafficSourcesList = htmlDoc.DocumentNode.SelectSingleNode(ListingStatsPageXPaths.TrafficSourcesList);
-        
+
         listing.DirectAndOtherTraffic = trafficSourcesList.SelectSingleNode(ListingStatsPageXPaths.DirectAndOtherTraffic).InnerText.ExtractNumber();
         listing.EtsyAppAndOtherEtsyPages = trafficSourcesList.SelectSingleNode(ListingStatsPageXPaths.EtsyAppAndOtherEtsyPages).InnerText.ExtractNumber();
         listing.EtsyAds = trafficSourcesList.SelectSingleNode(ListingStatsPageXPaths.EtsyAds).InnerText.ExtractNumber();
@@ -185,7 +185,6 @@ public class EtsyParser
                     var totalVisits = searchTermRow.SelectSingleNode(totalVisitsXPath).InnerText.Trim();
                     searchTerms.Add((searchTerm, totalVisits));
                 }
-                
             } while (await _webScrapingService.NextPage(ListingStatsPageXPaths.SearchTermsNextButton, ListingStatsPageXPaths.SearchTermAnyCellFullXPath));
 
             listing.SearchTerms = string.Join(", ", searchTerms.Select(searchTerm => $"{searchTerm.name}: {searchTerm.totalVisits}"));
