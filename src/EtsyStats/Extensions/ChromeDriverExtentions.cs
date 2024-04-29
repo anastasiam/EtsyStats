@@ -6,6 +6,7 @@ namespace EtsyStats.Extensions;
 
 public static class ChromeDriverExtensions
 {
+    private static readonly Random Random = new();
     public static async Task ClickWithDelay(this ChromeDriver chromeDriver, string elementXPath)
     {
         var actions = new Actions(chromeDriver);
@@ -21,6 +22,6 @@ public static class ChromeDriverExtensions
 
     private static async Task TaskDelay()
     {
-        await Task.Delay(new Random().Next(Settings.MinDelayBeforeActionInSeconds, Settings.MaxDelayBeforeActionInSeconds));
+        await Task.Delay(Random.Next(Settings.MinDelayInMilliseconds, Settings.MaxDelayInMilliseconds));
     }
 }

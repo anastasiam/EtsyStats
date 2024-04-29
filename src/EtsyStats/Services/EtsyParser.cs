@@ -18,8 +18,6 @@ public class EtsyParser
     private const string Href = "href";
     private const string Src = "src";
 
-    private const string TextPlaceholder = "{text}";
-
     private readonly ChromeDriver _chromeDriver;
     private readonly WebScrapingService _webScrapingService;
 
@@ -129,7 +127,7 @@ public class EtsyParser
         var htmlDoc = new HtmlDocument();
         htmlDoc.LoadHtml(html);
 
-        var imgSrc = htmlDoc.DocumentNode.SelectSingleNode($"//*[@id='mission-control-listing-stats']//a[contains(@href, '{id}')]//img[contains(@src, '170x135')]").Attributes[Src].Value;
+        var imgSrc = htmlDoc.DocumentNode.SelectSingleNode(ListingStatsPageXPaths.TitlePhotoUrl(id)).Attributes[Src].Value;
 
         listing.TitlePhotoUrl = imgSrc;
         listing.Title = htmlDoc.DocumentNode.SelectSingleNode(ListingStatsPageXPaths.Title).InnerText.Trim();
@@ -143,39 +141,30 @@ public class EtsyParser
 
     private static void ParseStatsPageGeneralData(ListingStats listing, HtmlDocument htmlDoc)
     {
-        var statsDataDropdown = "//div[contains(@class, 'stats-page-list')]/div/div/div[4]//div[contains(@class, 'dropdown')]//ul";
-        listing.Visits = decimal.Parse(htmlDoc.DocumentNode.SelectSingleNode(@$"{statsDataDropdown}/li[1]/span/div").InnerText.Trim());
-        listing.TotalViews = decimal.Parse(htmlDoc.DocumentNode.SelectSingleNode(@$"{statsDataDropdown}/li[2]/span/div").InnerText.Trim());
-        listing.Orders = decimal.Parse(htmlDoc.DocumentNode.SelectSingleNode(@$"{statsDataDropdown}/li[3]/span/div").InnerText.Trim());
-        listing.Revenue = decimal.Parse(htmlDoc.DocumentNode.SelectSingleNode(@$"{statsDataDropdown}/li[4]/span/div").InnerText.ExtractNumber());
+        var statsDataDropdown = htmlDoc.DocumentNode.SelectSingleNode(ListingStatsPageXPaths.GeneralDataDropdown);
+        
+        listing.Visits = decimal.Parse(statsDataDropdown.SelectSingleNode(ListingStatsPageXPaths.VisitsDropdownElement).InnerText.Trim());
+        listing.TotalViews = decimal.Parse(statsDataDropdown.SelectSingleNode(ListingStatsPageXPaths.TotalViewsDropdownElement).InnerText.Trim());
+        listing.Orders = decimal.Parse(statsDataDropdown.SelectSingleNode(ListingStatsPageXPaths.OrdersDropdownElement).InnerText.Trim());
+        listing.Revenue = decimal.Parse(statsDataDropdown.SelectSingleNode(ListingStatsPageXPaths.RevenueDropdownElement).InnerText.ExtractNumber());
     }
 
     private static void ParseStatsPageTrafficSources(ListingStats listing, HtmlDocument htmlDoc)
     {
-        var trafficSourcesList = "//div[contains(@class, 'stats-page-list')]//div/div/div[5]/div[1]/div[2]/div/div/div/div/div/ol";
-        var trafficSource = $"{trafficSourcesList}//span[contains(text(), '{TextPlaceholder}')]/../../../../../div[2]/span[2]";
-
-        var directAndOtherTraffic = htmlDoc.DocumentNode.SelectSingleNode(trafficSource.Replace(TextPlaceholder, "Direct &amp; other traffic")).InnerText;
-        var etsyAppAndOtherEtsyPages = htmlDoc.DocumentNode.SelectSingleNode(trafficSource.Replace(TextPlaceholder, "Etsy app &amp; other Etsy pages")).InnerText;
-        var etsyAds = htmlDoc.DocumentNode.SelectSingleNode(trafficSource.Replace(TextPlaceholder, "Etsy Ads")).InnerText;
-        var etsyMarketingAndSeo = htmlDoc.DocumentNode.SelectSingleNode(trafficSource.Replace(TextPlaceholder, "Etsy marketing &amp; SEO")).InnerText;
-        var socialMedia = htmlDoc.DocumentNode.SelectSingleNode(trafficSource.Replace(TextPlaceholder, "Social media")).InnerText;
-        var etsySearch = htmlDoc.DocumentNode.SelectSingleNode(trafficSource.Replace(TextPlaceholder, "Etsy search")).InnerText;
-
-        listing.DirectAndOtherTraffic = directAndOtherTraffic.ExtractNumber();
-        listing.EtsyAppAndOtherEtsyPages = etsyAppAndOtherEtsyPages.ExtractNumber();
-        listing.EtsyAds = etsyAds.ExtractNumber();
-        listing.EtsyMarketingAndSeo = etsyMarketingAndSeo.ExtractNumber();
-        listing.SocialMedia = socialMedia.ExtractNumber();
-        listing.EtsySearch = etsySearch.ExtractNumber();
+        var trafficSourcesList = htmlDoc.DocumentNode.SelectSingleNode(ListingStatsPageXPaths.TrafficSourcesList);
+        
+        listing.DirectAndOtherTraffic = trafficSourcesList.SelectSingleNode(ListingStatsPageXPaths.DirectAndOtherTraffic).InnerText.ExtractNumber();
+        listing.EtsyAppAndOtherEtsyPages = trafficSourcesList.SelectSingleNode(ListingStatsPageXPaths.EtsyAppAndOtherEtsyPages).InnerText.ExtractNumber();
+        listing.EtsyAds = trafficSourcesList.SelectSingleNode(ListingStatsPageXPaths.EtsyAds).InnerText.ExtractNumber();
+        listing.EtsyMarketingAndSeo = trafficSourcesList.SelectSingleNode(ListingStatsPageXPaths.EtsyMarketingAndSeo).InnerText.ExtractNumber();
+        listing.SocialMedia = trafficSourcesList.SelectSingleNode(ListingStatsPageXPaths.SocialMedia).InnerText.ExtractNumber();
+        listing.EtsySearch = trafficSourcesList.SelectSingleNode(ListingStatsPageXPaths.EtsySearch).InnerText.ExtractNumber();
     }
 
     private async Task ParseStatsPageSearchTerms(ListingStats listing, HtmlDocument htmlDoc)
     {
-        var searchTermTableXPath = "//table[@id='horizontal-chart4']";
-        var searchTermRowXPath = $"{searchTermTableXPath}//tr[not(contains(@class,'column-header'))]";
-        var searchTermXPath = "td/div/div[1]/div[1]/span[1]";
-        var searchTermRows = htmlDoc.DocumentNode.SelectNodes(searchTermRowXPath);
+        var searchTermsTable = htmlDoc.DocumentNode.SelectSingleNode(ListingStatsPageXPaths.SearchTermsTable);
+        var searchTermRows = searchTermsTable.SelectNodes(ListingStatsPageXPaths.SearchTermRow);
 
         var searchTerms = new List<(string name, string totalVisits)>();
         if (searchTermRows is not null)
@@ -184,19 +173,20 @@ public class EtsyParser
             {
                 foreach (var searchTermRow in searchTermRows)
                 {
-                    var searchTerm = searchTermRow.SelectSingleNode(searchTermXPath).InnerText.Trim();
+                    var searchTerm = searchTermRow.SelectSingleNode(ListingStatsPageXPaths.SearchTermCell).InnerText.Trim();
 
                     // Sometimes it's three columns (Etsy, Google, Total visits) in search terms, sometimes one (Visits)
                     var totalVisitsXPath =
                         // If 'Total visits' column exists
-                        searchTermRow.SelectSingleNode($"{searchTermTableXPath}//div[contains(text(), 'Total visits')]") is not null
-                            ? "td/div/div[1]/div[2]/div[3]" // path to 'Total visits cell
-                            : "td/div/div[1]/div[2]"; // path to 'Visits' cell
+                        searchTermsTable.SelectSingleNode(ListingStatsPageXPaths.TotalVisitsColumn) is not null
+                            ? ListingStatsPageXPaths.TotalVisitsCell // path to 'Total visits cell
+                            : ListingStatsPageXPaths.VisitsCell; // path to 'Visits' cell
 
                     var totalVisits = searchTermRow.SelectSingleNode(totalVisitsXPath).InnerText.Trim();
                     searchTerms.Add((searchTerm, totalVisits));
                 }
-            } while (await _webScrapingService.NextPage("{paginationXPath}//button[@title='Next page']", $"{searchTermRowXPath}/{searchTermXPath}"));
+                
+            } while (await _webScrapingService.NextPage(ListingStatsPageXPaths.SearchTermsNextButton, ListingStatsPageXPaths.SearchTermAnyCellFullXPath));
 
             listing.SearchTerms = string.Join(", ", searchTerms.Select(searchTerm => $"{searchTerm.name}: {searchTerm.totalVisits}"));
         }
