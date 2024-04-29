@@ -12,9 +12,9 @@ namespace EtsyStats.Services;
 public class EtsyParser
 {
     // TODO use appsettings.jsom
-    private const string UserDataDirectory = "C:\\Users\\Administrator\\AppData\\Local\\Google\\Chrome\\User Data";
+    private const string UserDataDirectory = "C:\\Users\\USER2\\AppData\\Local\\Google\\Chrome\\User Data";
     private const string UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36";
-    
+
     private const string Href = "href";
     private const string Src = "src";
 
@@ -56,24 +56,33 @@ public class EtsyParser
 
         List<SearchAnalytics> searchAnalytics = new();
         var page = 1;
-        
         do
         {
             await ProgramHelper.OriginalOut.WriteLineAsync($"Loading data from page {page}...");
-            page++;
-            
-            var searchAnalyticsRows = _chromeDriver.FindElements(By.XPath(SearchAnalyticsPageXPaths.TableRow));
-            searchAnalytics.AddRange(searchAnalyticsRows.Select(searchAnalyticsRow => new SearchAnalytics
-            {
-                SearchQuery = searchAnalyticsRow.FindElement(By.XPath(SearchAnalyticsPageXPaths.SearchQueryTableCell)).Text.Trim(),
-                Impressions = searchAnalyticsRow.FindElement(By.XPath(SearchAnalyticsPageXPaths.ImpressionsTableCell)).Text.Trim(),
-                Position = searchAnalyticsRow.FindElement(By.XPath(SearchAnalyticsPageXPaths.PositionTableCell)).Text.Trim(),
-                Visits = searchAnalyticsRow.FindElement(By.XPath(SearchAnalyticsPageXPaths.VisitsTableCell)).Text.ExtractNumber(),
-                ConversionRate = searchAnalyticsRow.FindElement(By.XPath(SearchAnalyticsPageXPaths.ConversionRateTableCell)).Text.Trim(),
-                Revenue = searchAnalyticsRow.FindElement(By.XPath(SearchAnalyticsPageXPaths.RevenueTableCell)).Text.ExtractNumber(),
-                Listings = searchAnalyticsRow.FindElement(By.XPath(SearchAnalyticsPageXPaths.ListingsTableCell)).Text.Trim()
-            }));
 
+            try
+            {
+                var searchAnalyticsRows = _chromeDriver.FindElements(By.XPath(SearchAnalyticsPageXPaths.TableRow));
+                searchAnalytics.AddRange(searchAnalyticsRows.Select(searchAnalyticsRow => new SearchAnalytics
+                {
+                    SearchQuery = searchAnalyticsRow.FindElement(By.XPath(SearchAnalyticsPageXPaths.SearchQueryTableCell)).Text.Trim(),
+                    Impressions = searchAnalyticsRow.FindElement(By.XPath(SearchAnalyticsPageXPaths.ImpressionsTableCell)).Text.Trim(),
+                    Position = searchAnalyticsRow.FindElement(By.XPath(SearchAnalyticsPageXPaths.PositionTableCell)).Text.Trim(),
+                    Visits = searchAnalyticsRow.FindElement(By.XPath(SearchAnalyticsPageXPaths.VisitsTableCell)).Text.ExtractNumber(),
+                    ConversionRate = searchAnalyticsRow.FindElement(By.XPath(SearchAnalyticsPageXPaths.ConversionRateTableCell)).Text.Trim(),
+                    Revenue = searchAnalyticsRow.FindElement(By.XPath(SearchAnalyticsPageXPaths.RevenueTableCell)).Text.ExtractNumber(),
+                    Listings = searchAnalyticsRow.FindElement(By.XPath(SearchAnalyticsPageXPaths.ListingsTableCell)).Text.Trim()
+                }));
+            }
+            catch (Exception e)
+            {
+                await Log.Error($"Exception on parsing analytics on page {page}.\r\n{e.GetBaseException()}");
+                await ProgramHelper.OriginalOut.WriteLineAsync($"An error occured on parsing analytics on page {page}.");
+                await File.AppendAllTextAsync("logs/last_search_analytics.html", _chromeDriver.PageSource);
+                throw;
+            }
+            
+            page++;
         } while (await _webScrapingService.NextPage(string.Empty, SearchAnalyticsPageXPaths.SearchQueryFirstTableCellFullXPath));
 
         return searchAnalytics;
@@ -84,14 +93,14 @@ public class EtsyParser
         var htmlDocument = new HtmlDocument();
         htmlDocument.LoadHtml(html);
         var listingsElements = htmlDocument.DocumentNode.SelectNodes(ListingsPageXPaths.ListingsListElement);
-        
+
         List<ListingStats> listings = new();
         foreach (var listingElement in listingsElements)
         {
             var link = listingElement.SelectSingleNode(ListingsPageXPaths.ListingLink).Attributes[Href].Value;
             var id = EtsyUrl.GetListingIdFromLink(link);
             var url = EtsyUrl.GetListingStatsUrl(shop, id);
-            
+
             var listingStatsHtml = await _webScrapingService.NavigateAndLoadHtmlFromUrl(url, ListingStatsPageXPaths.Title);
 
             var listing = new ListingStats
@@ -140,7 +149,7 @@ public class EtsyParser
         listing.Orders = decimal.Parse(htmlDoc.DocumentNode.SelectSingleNode(@$"{statsDataDropdown}/li[3]/span/div").InnerText.Trim());
         listing.Revenue = decimal.Parse(htmlDoc.DocumentNode.SelectSingleNode(@$"{statsDataDropdown}/li[4]/span/div").InnerText.ExtractNumber());
     }
-    
+
     private static void ParseStatsPageTrafficSources(ListingStats listing, HtmlDocument htmlDoc)
     {
         var trafficSourcesList = "//div[contains(@class, 'stats-page-list')]//div/div/div[5]/div[1]/div[2]/div/div/div/div/div/ol";
@@ -202,7 +211,7 @@ public class EtsyParser
 
         options.AddArguments("headless");
         options.AddArguments($"--user-agent={UserAgent}");
-        
+
         // TODO use login, password
         options.AddArguments("--profile-directory=Пользователь 1");
         options.AddArguments($"--user-data-dir={UserDataDirectory}");
