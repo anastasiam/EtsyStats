@@ -20,6 +20,17 @@ public static class ListingStatsPageXPaths
 
     private const string TextPlaceholder = "{text}";
 
+    // Search Terms
+
+    public const string SearchTermsTable = "//table[@id='horizontal-chart4']";
+    public const string SearchTermRow = "//tr[not(contains(@class, 'column-header'))]";
+    public const string SearchTermCell = "td/div/div[1]/div[1]/span[1]";
+    public const string TotalVisitsColumn = $"//div[contains(text(), '{TotalVisits}')]";
+    public const string TotalVisitsCell = "td/div/div[1]/div[2]/div[3]";
+    public const string VisitsCell = "td/div/div[1]/div[2]/div[3]";
+    public const string SearchTermAnyCellFullXPath = $"{SearchTermsTable}{SearchTermRow}/{SearchTermCell}";
+    public const string SearchTermsNextButton = $"{SearchTermsTable}/../..//button[@title='{NextPage}']";
+
     // General Data
 
     public const string Title = @"//div[contains(@class, 'stats-page-list')]/div/div/div[2]/div[1]/div/div/div/div/div/div/div[2]/div[1]/div[1]/div/span";
@@ -28,7 +39,6 @@ public static class ListingStatsPageXPaths
     public static string TotalViewsDropdownElement => GeneralDataDropdownElement.Replace(TextPlaceholder, TotalViewsText);
     public static string OrdersDropdownElement => GeneralDataDropdownElement.Replace(TextPlaceholder, OrdersText);
     public static string RevenueDropdownElement => GeneralDataDropdownElement.Replace(TextPlaceholder, RevenueText);
-    public static string TitlePhotoUrl(string id) => $"//*[@id='mission-control-listing-stats']//a[contains(@href, '{id}')]//img[contains(@src, '170x135')]";
 
     // Traffic Sources
 
@@ -40,14 +50,8 @@ public static class ListingStatsPageXPaths
     public static string SocialMedia => TrafficSource.Replace(TextPlaceholder, SocialMediaText);
     public static string EtsySearch => TrafficSource.Replace(TextPlaceholder, EtsySearchText);
 
-    // Search Terms
-
-    public const string SearchTermsTable = "//table[@id='horizontal-chart4']";
-    public const string SearchTermRow = "//tr[not(contains(@class, 'column-header'))]";
-    public const string SearchTermCell = "td/div/div[1]/div[1]/span[1]";
-    public const string TotalVisitsColumn = $"//div[contains(text(), '{TotalVisits}')]";
-    public const string TotalVisitsCell = "td/div/div[1]/div[2]/div[3]";
-    public const string VisitsCell = "td/div/div[1]/div[2]/div[3]";
-    public const string SearchTermAnyCellFullXPath = $"{SearchTermsTable}{SearchTermRow}/{SearchTermCell}";
-    public const string SearchTermsNextButton = $"{SearchTermsTable}/../..//button[@title='{NextPage}']";
+    public static string TitlePhotoUrl(string id)
+    {
+        return $"//*[@id='mission-control-listing-stats']//a[contains(@href, '{id}')]//img[contains(@src, '170x135')]";
+    }
 }

@@ -1,5 +1,4 @@
-using EtsyStats.Models;
-using Google;
+using EtsyStats.Attributes;
 using Google.Apis.Auth.OAuth2;
 using Google.Apis.Services;
 using Google.Apis.Sheets.v4;
@@ -9,144 +8,16 @@ namespace EtsyStats.Services;
 
 public class GoogleSheetService
 {
+    // TODO put in appsettings.json
     private const string GoogleCredentialsFileName = "google-credentials.json";
+    private const string AllRowsRange = $"{TabNamePlaceholder}!A1:Z";
+    private const string RowsDimension = "ROWS";
+    private const string TabNamePlaceholder = "{tabName}";
     private static readonly string[] Scopes = { SheetsService.Scope.Spreadsheets };
 
-    // TODO Make property attribute with column name and order
-    private static readonly List<object> ColumnNames = new()
-    {
-        "Title Photo",
-        "Link",
-        "Visits",
-        "Total Views",
-        "Orders",
-        "Revenue",
-        "Conversion Rate",
-        "Click Rate",
-        "Direct & other traffic",
-        "Etsy app & other Etsy pages",
-        "Etsy Ads",
-        "Etsy marketing & SEO",
-        "Social media",
-        "Etsy search",
-        "Title",
-        "Search Terms"
-    };
+    private readonly SheetsService _sheetsService;
 
-    private static readonly List<object> SearchAnalyticsColumnNames = new()
-    {
-        "Search query",
-        "Impressions",
-        "Position",
-        "Visits",
-        "Conversion rate",
-        "Revenue",
-        "Listings"
-    };
-
-    public async Task WriteListingsToSheet(string sheetId, string shop, List<ListingStats> listings)
-    {
-        var tabName = $"{shop} - Stats";
-        var service = GetSheetsService();
-
-        var valuesResource = service.Spreadsheets.Values;
-
-        var clear = valuesResource.Clear(new ClearValuesRequest(), sheetId, $"{tabName}!1:1000");
-        await clear.ExecuteAsync();
-
-        // Headers
-        var valueRange = new ValueRange { Values = new List<IList<object>> { ColumnNames }, MajorDimension = "ROWS" };
-
-        // Values
-        foreach (var listing in listings)
-        {
-            valueRange.Values.Add(new List<object>
-            {
-                $@"=IMAGE(""{listing.TitlePhotoUrl}"")",
-                listing.Link,
-                listing.Visits,
-                listing.TotalViews,
-                listing.Orders,
-                listing.Revenue,
-                listing.ConversionRate,
-                listing.ClickRate,
-                listing.DirectAndOtherTraffic,
-                listing.EtsyAppAndOtherEtsyPages,
-                listing.EtsyAds,
-                listing.EtsyMarketingAndSeo,
-                listing.SocialMedia,
-                listing.EtsySearch,
-                listing.Title,
-                listing.SearchTerms
-            });
-        }
-
-        var update = valuesResource.Update(valueRange, sheetId, $"{tabName}!A1:P{listings.Count + 2}");
-
-        update.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.USERENTERED;
-
-        var response = await update.ExecuteAsync();
-        ProgramHelper.OriginalOut.WriteLine($@"\nUpdated rows:{response.UpdatedRows}");
-    }
-
-    public async Task WriteSearchAnalyticsToSheet(string sheetId, string shop, List<SearchAnalytics> searchQueriesAnalytics)
-    {
-        var tabName = $"{shop} - Analytics";
-        var service = GetSheetsService();
-
-        try
-        {
-            await WriteSearchAnalyticsToSheet(service, sheetId, tabName, searchQueriesAnalytics);
-        }
-        catch (GoogleApiException)
-        {
-            var request = new BatchUpdateSpreadsheetRequest
-            {
-                Requests = new List<Request>
-                {
-                    new() { AddSheet = new AddSheetRequest { Properties = new SheetProperties { Title = tabName, Index = 0 } } },
-                }
-            };
-            var batchUpdate = service.Spreadsheets.BatchUpdate(request, sheetId);
-            await batchUpdate.ExecuteAsync();
-
-            await WriteSearchAnalyticsToSheet(service, sheetId, tabName, searchQueriesAnalytics);
-        }
-    }
-
-    private async Task WriteSearchAnalyticsToSheet(SheetsService service, string sheetId, string tabName, List<SearchAnalytics> searchQueriesAnalytics)
-    {
-        var valuesResource = service.Spreadsheets.Values;
-        var clear = valuesResource.Clear(new ClearValuesRequest(), sheetId, $"{tabName}!1:1000");
-        await clear.ExecuteAsync();
-
-        // Headers
-        var valueRange = new ValueRange { Values = new List<IList<object>> { SearchAnalyticsColumnNames }, MajorDimension = "ROWS" };
-
-        // Values
-        foreach (var listing in searchQueriesAnalytics)
-        {
-            valueRange.Values.Add(new List<object>
-            {
-                listing.SearchQuery,
-                listing.Impressions,
-                listing.Position,
-                listing.Visits,
-                listing.ConversionRate,
-                listing.Revenue,
-                listing.Listings
-            });
-        }
-
-        var update = valuesResource.Update(valueRange, sheetId, $"{tabName}!A1:G{searchQueriesAnalytics.Count + 2}");
-
-        update.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.USERENTERED;
-
-        var response = await update.ExecuteAsync();
-        ProgramHelper.OriginalOut.WriteLine($@"Updated rows: {response.UpdatedRows}");
-    }
-
-    private static SheetsService GetSheetsService()
+    public GoogleSheetService()
     {
         using var stream = new FileStream(GoogleCredentialsFileName, FileMode.Open, FileAccess.Read);
         var serviceInitializer = new BaseClientService.Initializer
@@ -154,6 +25,77 @@ public class GoogleSheetService
             HttpClientInitializer = GoogleCredential.FromStream(stream).CreateScoped(Scopes)
         };
 
-        return new SheetsService(serviceInitializer);
+        _sheetsService = new SheetsService(serviceInitializer);
+    }
+
+    public async Task WriteDataToSheet<T>(string sheetId, string tabName, List<T> data)
+    {
+        var valuesResource = _sheetsService.Spreadsheets.Values;
+
+        var clear = valuesResource.Clear(new ClearValuesRequest(), sheetId, AllRowsRange.Replace(TabNamePlaceholder, tabName));
+        await clear.ExecuteAsync();
+
+        var properties = typeof(T).GetProperties()
+            .Select(propertyInfo => new
+            {
+                propertyInfo,
+                sheetColumnAttribute = (SheetColumnAttribute?)propertyInfo.GetCustomAttributes(typeof(SheetColumnAttribute), false).FirstOrDefault()
+            })
+            .Where(p => p.sheetColumnAttribute is not null)
+            .OrderBy(p => p.sheetColumnAttribute!.Order)
+            .ToList();
+
+        // Headers
+        var columns = properties.Select(p => (object)(p.sheetColumnAttribute!.ColumnName ?? p.propertyInfo.Name)).ToList();
+        var valueRange = new ValueRange { Values = new List<IList<object>> { columns }, MajorDimension = RowsDimension };
+
+        // Values
+        foreach (var rowData in data)
+        {
+            var values = properties.Select(p => p.propertyInfo.GetValue(rowData)).ToList();
+            valueRange.Values.Add(values);
+        }
+
+        var range = GetRange(tabName, columns.Count, data.Count + 1); // +1 - for header
+        var update = valuesResource.Update(valueRange, sheetId, range);
+
+        update.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.USERENTERED;
+
+        var response = await update.ExecuteAsync();
+        await ProgramHelper.OriginalOut.WriteLineAsync($@"\nUpdated rows:{response.UpdatedRows}");
+    }
+
+    public async Task CreateTab(string sheetId, string tabName)
+    {
+        var request = new BatchUpdateSpreadsheetRequest
+        {
+            Requests = new List<Request>
+            {
+                new() { AddSheet = new AddSheetRequest { Properties = new SheetProperties { Title = tabName, Index = 0 } } }
+            }
+        };
+        var batchUpdate = _sheetsService.Spreadsheets.BatchUpdate(request, sheetId);
+        await batchUpdate.ExecuteAsync();
+    }
+
+    private string GetRange(string tabName, int columnsCount, int rowsCount)
+    {
+        var lastColumnName = GetGoogleSheetColumnName(columnsCount);
+
+        return $"{tabName}!A1:{lastColumnName}{rowsCount + 2}";
+    }
+
+    private string GetGoogleSheetColumnName(int columnNumber)
+    {
+        var columnName = string.Empty;
+
+        while (columnNumber > 0)
+        {
+            var modulo = (columnNumber - 1) % 26;
+            columnName = Convert.ToChar('A' + modulo) + columnName;
+            columnNumber = (columnNumber - modulo) / 26;
+        }
+
+        return columnName;
     }
 }

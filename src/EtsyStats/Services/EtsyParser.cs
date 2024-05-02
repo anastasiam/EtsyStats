@@ -47,12 +47,12 @@ public class EtsyParser
         }
     }
 
-    public async Task<List<SearchAnalytics>> GetSearchAnalytics(string shop, DateRange dateRange)
+    public async Task<List<SearchQueryAnalytics>> GetSearchAnalytics(string shop, DateRange dateRange)
     {
         var url = EtsyUrl.GetSearchAnalyticsUrl(shop, dateRange);
         await _webScrapingService.NavigateAndLoadHtmlFromUrl(url, SearchAnalyticsPageXPaths.SearchQueryFirstTableCellFullXPath);
 
-        List<SearchAnalytics> searchAnalytics = new();
+        List<SearchQueryAnalytics> searchAnalytics = new();
         var page = 1;
         do
         {
@@ -61,13 +61,13 @@ public class EtsyParser
             try
             {
                 var searchAnalyticsRows = _chromeDriver.FindElements(By.XPath(SearchAnalyticsPageXPaths.TableRow));
-                searchAnalytics.AddRange(searchAnalyticsRows.Select(searchAnalyticsRow => new SearchAnalytics
+                searchAnalytics.AddRange(searchAnalyticsRows.Select(searchAnalyticsRow => new SearchQueryAnalytics
                 {
                     SearchQuery = searchAnalyticsRow.FindElement(By.XPath(SearchAnalyticsPageXPaths.SearchQueryTableCell)).Text.Trim(),
                     Impressions = searchAnalyticsRow.FindElement(By.XPath(SearchAnalyticsPageXPaths.ImpressionsTableCell)).Text.Trim(),
                     Position = searchAnalyticsRow.FindElement(By.XPath(SearchAnalyticsPageXPaths.PositionTableCell)).Text.Trim(),
-                    Visits = searchAnalyticsRow.FindElement(By.XPath(SearchAnalyticsPageXPaths.VisitsTableCell)).Text.ExtractNumber(),
-                    ConversionRate = searchAnalyticsRow.FindElement(By.XPath(SearchAnalyticsPageXPaths.ConversionRateTableCell)).Text.Trim(),
+                    Visits = searchAnalyticsRow.FindElement(By.XPath(SearchAnalyticsPageXPaths.VisitsTableCell)).Text,
+                    ConversionRate = searchAnalyticsRow.FindElement(By.XPath(SearchAnalyticsPageXPaths.ConversionRateTableCell)).Text.Trim().ExtractNumber(),
                     Revenue = searchAnalyticsRow.FindElement(By.XPath(SearchAnalyticsPageXPaths.RevenueTableCell)).Text.ExtractNumber(),
                     Listings = searchAnalyticsRow.FindElement(By.XPath(SearchAnalyticsPageXPaths.ListingsTableCell)).Text.Trim()
                 }));

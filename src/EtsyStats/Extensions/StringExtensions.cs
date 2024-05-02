@@ -4,7 +4,7 @@ namespace EtsyStats.Extensions;
 
 public static class StringExtensions
 {
-    private const string NumberPattern = @"\d+";
+    private const string NumberPattern = @"(\d+(\.\d+)?)|(\.\d+)\d+";
 
     public static string ExtractNumber(this string s)
     {

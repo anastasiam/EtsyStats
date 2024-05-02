@@ -1,4 +1,4 @@
-﻿// See https://aka.ms/new-console-template for more information
+// See https://aka.ms/new-console-template for more information
 
 using EtsyStats;
 using EtsyStats.Models;
@@ -24,7 +24,7 @@ Console.WriteLine("You should not see this");
 
 Startup.SetupLogs();
 
-var googleSheetService = new GoogleSheetService();
+var etsyDataUploadService = new EtsyDataUploadService();
 var etsyParser = new EtsyParser(chromeLocation);
 do
 {
@@ -56,7 +56,7 @@ do
                 // var data = new List<ListingStats> { listing };
 
                 ProgramHelper.OriginalOut.WriteLine("\nWriting data to Google Sheets...");
-                await googleSheetService.WriteListingsToSheet(sheetId, shop, data);
+                await etsyDataUploadService.WriteListingsStatsToGoogleSheet(sheetId, shop, data);
 
                 ProgramHelper.OriginalOut.WriteLine("\nListings were uploaded successfully.");
                 break;
@@ -68,7 +68,7 @@ do
                 var data = await etsyParser.GetSearchAnalytics(shop, dateRange);
 
                 ProgramHelper.OriginalOut.WriteLine("\nWriting data to Google Sheets...");
-                await googleSheetService.WriteSearchAnalyticsToSheet(sheetId, shop, data);
+                await etsyDataUploadService.WriteSearchAnalyticsToGoogleSheet(sheetId, shop, data);
 
                 break;
             }

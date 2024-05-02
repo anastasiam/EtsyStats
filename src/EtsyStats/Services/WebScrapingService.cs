@@ -29,9 +29,9 @@ public class WebScrapingService
     public async Task<string?> NavigateAndLoadHtmlFromUrl(string url, string elementToLoadXPath, string? errorElementXPath = null)
     {
         await _chromeDriver.NavigateToUrlWithDelay(url);
-        var isErrorPage = WaitForElementToLoad(elementToLoadXPath, errorElementXPath);
+        var loaded = WaitForElementToLoad(elementToLoadXPath, errorElementXPath);
 
-        return isErrorPage ? null : _chromeDriver.PageSource;
+        return loaded ? _chromeDriver.PageSource : null;
     }
 
     private async Task<bool> ClickAndWaitForElementTextToChange(string buttonXpath, string elementXPath)
@@ -53,10 +53,14 @@ public class WebScrapingService
     private bool WaitForElementToLoad(string elementToLoadXPath, string? errorElementXPath = null)
     {
         var wait = new WebDriverWait(_chromeDriver, TimeSpan.FromSeconds(Settings.WaitDelayInSeconds));
-        wait.Until(c => c.FindElement(By.XPath(elementToLoadXPath))
-                        ?? (errorElementXPath is not null ? c.FindElement(By.XPath(errorElementXPath)) : null));
+        var result = wait.Until(c =>
+        {
+            if (c.FindElements(By.XPath(elementToLoadXPath)).Count > 0) return true;
+
+            return errorElementXPath is not null && c.FindElement(By.XPath(errorElementXPath)) != null;
+        });
 
         // TODO optimize - compare with HtmlDocument speed
-        return _chromeDriver.FindElements(By.XPath(elementToLoadXPath)).Count > 0;
+        return result && _chromeDriver.FindElements(By.XPath(elementToLoadXPath)).Count > 0;
     }
 }
