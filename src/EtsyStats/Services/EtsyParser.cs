@@ -14,9 +14,9 @@ namespace EtsyStats.Services;
 public class EtsyParser
 {
     // TODO use appsettings.jsom
-    private const string UserDataDirectory = "C:\\Users\\Administrator\\AppData\\Local\\Google\\Chrome\\User Data";
+    private const string UserDataDirectory = "C:\\Users\\USER2\\AppData\\Local\\Google\\Chrome\\User Data";
     private const string UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36";
-
+    private const string CategorySeparator = " / ";
     private const string Href = "href";
     private const string Src = "src";
 
@@ -35,9 +35,9 @@ public class EtsyParser
     {
         List<ListingStats> listings = new();
 
-        for (var page = 1;; page++)
+        for (var page = 1; page == 1; page++)
         {
-            var url = EtsyUrl.GetListingsUrl(page);
+            var url = EtsyUrl.Listings(shop, page);
 
             var html = await _webScrapingService.NavigateAndLoadHtmlFromUrl(url, ListingsPageXPaths.ListingsListElement, ListingsPageXPaths.EmptyStateDiv);
             if (html == null)
@@ -55,7 +55,7 @@ public class EtsyParser
 
     public async Task<List<SearchQueryAnalytics>> GetSearchAnalytics(DateRange dateRange)
     {
-        var url = EtsyUrl.GetSearchAnalyticsUrl(dateRange);
+        var url = EtsyUrl.SearchAnalytics(shop, dateRange);
         await _webScrapingService.NavigateAndLoadHtmlFromUrl(url, SearchAnalyticsPageXPaths.SearchQueryFirstTableCellFullXPath);
 
         List<SearchQueryAnalytics> searchAnalytics = new();
@@ -101,20 +101,18 @@ public class EtsyParser
         List<ListingStats> listings = new();
         foreach (var listingElement in listingsElements)
         {
-            var link = listingElement.SelectSingleNode(ListingsPageXPaths.ListingLink).Attributes[Href].Value;
-            var id = EtsyUrl.GetListingIdFromLink(link);
-            var url = EtsyUrl.GetListingStatsUrl(id, dateRange);
-
-            var listingStatsHtml = await _webScrapingService.NavigateAndLoadHtmlFromUrl(url, ListingStatsPageXPaths.Title);
+            var editUrl = listingElement.SelectSingleNode(ListingsPageXPaths.ListingLink).Attributes[Href].Value;
+            var id = EtsyUrl.GetListingIdFromLink(editUrl);
 
             var listing = new ListingStats
             {
-                Link = EtsyUrl.GetListingUrl(id)
+                Link = EtsyUrl.Listing(id)
             };
 
             try
             {
-                await LoadListingStatsFromPage(listingStatsHtml!, id, listing);
+                await LoadListingFromStatsPage(shop, id, dateRange, listing);
+                await LoadListingFromEditPage(shop, id, listing);
             }
             catch (Exception e)
             {
@@ -128,13 +126,15 @@ public class EtsyParser
         return listings;
     }
 
-    private async Task LoadListingStatsFromPage(string html, string id, ListingStats listing)
+    private async Task LoadListingFromStatsPage(string shop, string id, DateRange dateRange, ListingStats listing)
     {
+        var url = EtsyUrl.ListingStats(shop, id, dateRange);
+        var html = await _webScrapingService.NavigateAndLoadHtmlFromUrl(url, ListingStatsPageXPaths.Title);
+        
         var htmlDoc = new HtmlDocument();
         htmlDoc.LoadHtml(html);
 
         var imgSrc = htmlDoc.DocumentNode.SelectSingleNode(ListingStatsPageXPaths.TitlePhotoUrl(id)).Attributes[Src].Value;
-
         listing.TitlePhotoUrl = imgSrc;
         listing.Title = htmlDoc.DocumentNode.SelectSingleNode(ListingStatsPageXPaths.Title).InnerText.Trim();
 
@@ -143,6 +143,24 @@ public class EtsyParser
         ParseStatsPageTrafficSources(listing, htmlDoc);
 
         await ParseStatsPageSearchTerms(listing, htmlDoc);
+    }
+
+    private async Task LoadListingFromEditPage(string shop, string id, ListingStats listing)
+    {
+        var url = EtsyUrl.ListingEdit(shop, id);
+        var html = await _webScrapingService.NavigateAndLoadHtmlFromUrl(url, ListingEditPageXPaths.ShopSection);
+
+        var htmlDoc = new HtmlDocument();
+        htmlDoc.LoadHtml(html);
+
+        var tags = htmlDoc.DocumentNode.SelectNodes(ListingEditPageXPaths.Tag);
+        listing.Tags = tags.Select(t => t.InnerText.Trim()).ToList();
+
+        var categories = htmlDoc.DocumentNode.SelectNodes(ListingEditPageXPaths.Category);
+        listing.Category = string.Join(CategorySeparator, categories.Select(c => c.InnerText.Trim()));
+
+        var shopSectionSelector = new SelectElement(_chromeDriver.FindElement(By.XPath(ListingEditPageXPaths.ShopSection)));
+        listing.ShopSection = shopSectionSelector.SelectedOption.Text;
     }
 
     private void ParseStatsPageGeneralData(ListingStats listing, HtmlDocument htmlDoc)
@@ -172,7 +190,7 @@ public class EtsyParser
         var searchTermsTable = htmlDoc.DocumentNode.SelectSingleNode(ListingStatsPageXPaths.SearchTermsTable);
         var searchTermRows = searchTermsTable.SelectNodes(ListingStatsPageXPaths.SearchTermRow);
 
-        var searchTerms = new List<(string name, string totalVisits)>();
+        listing.SearchTerms = new List<SearchTerm>();
         if (searchTermRows is not null)
         {
             do
@@ -189,11 +207,9 @@ public class EtsyParser
                             : ListingStatsPageXPaths.VisitsCell; // path to 'Visits' cell
 
                     var totalVisits = searchTermRow.SelectSingleNode(totalVisitsXPath).InnerText.Trim();
-                    searchTerms.Add((searchTerm, totalVisits));
+                    listing.SearchTerms.Add(new SearchTerm { Name = searchTerm, TotalVisits = totalVisits });
                 }
             } while (await _webScrapingService.NextPage(ListingStatsPageXPaths.SearchTermsNextButton, ListingStatsPageXPaths.SearchTermAnyCellFullXPath));
-
-            listing.SearchTerms = string.Join(", ", searchTerms.Select(searchTerm => $"{searchTerm.name}: {searchTerm.totalVisits}"));
         }
     }
 

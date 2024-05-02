@@ -1,13 +1,18 @@
 using EtsyStats.Attributes;
+using EtsyStats.Extensions;
+using EtsyStats.Helpers;
 
 namespace EtsyStats.Models;
 
 public class ListingStats
 {
+    private const string ListSeparator = ", ";
+    private const string WordsSeparator = " ";
+    
     public string? TitlePhotoUrl { get; set; }
 
     [SheetColumn("Title Photo", Order = 1)]
-    public string TitlePhoto => $@"=IMAGE(""{TitlePhotoUrl}"")";
+    public string? TitlePhoto => GoogleSheetsFormula.GetImageFromUrl(TitlePhotoUrl);
 
     [SheetColumn("Link", Order = 2)] public string? Link { get; set; }
 
@@ -48,26 +53,86 @@ public class ListingStats
 
     [SheetColumn("Title", Order = 15)] public string? Title { get; set; }
 
-    [SheetColumn("Search terms", Order = 16)]
-    public string? SearchTerms { get; set; }
+    public List<SearchTerm>? SearchTerms { get; set; } 
 
-    [SheetColumn("Tags", Order = 17)] public string? Tags { get; set; }
+    [SheetColumn("Search terms", Order = 16)]
+    public string? SearchTermsFormatted => SearchTerms is not null ? string.Join(ListSeparator, SearchTerms.Select(searchTerm => $"{searchTerm.Name}: {searchTerm.TotalVisits}")) : null;
+
+    public List<string>? Tags { get; set; }
+
+    [SheetColumn("Tags", Order = 17)] public string? TagsFormatted => Tags is not null ? string.Join(ListSeparator, Tags) : null;
 
     [SheetColumn("Working Tags", Order = 18)]
-    public string? WorkingTags { get; set; }
+    public string? WorkingTagsFormatted
+    {
+        get
+        {
+            if (Tags is null || SearchTerms is null) return null;
+
+            return string.Join(ListSeparator, Tags.Where(t => SearchTerms.Any(st => t.Equals(st.Name, StringComparison.OrdinalIgnoreCase))));
+        }
+    }
 
     [SheetColumn("Non-working Tags", Order = 19)]
-    public string? NonWorkingTags { get; set; }
+    public string? NonWorkingTags
+    {
+        get
+        {
+            if (Tags is null || SearchTerms is null) return null;
 
+            return string.Join(ListSeparator, Tags.Where(t => !SearchTerms.Any(st => t.Equals(st.Name, StringComparison.OrdinalIgnoreCase))).ToList());
+        }
+    }
+
+    private IEnumerable<string?>? SearchTermsWords => SearchTerms?.SelectMany(st => st.Name?.Split(WordsSeparator, StringSplitOptions.RemoveEmptyEntries));
+    private IEnumerable<string>? TitleWords => Title?.ReplaceSpecialCharacters(WordsSeparator).Split(WordsSeparator, StringSplitOptions.RemoveEmptyEntries);
+    
     [SheetColumn("Working Title Words", Order = 20)]
-    public string? WorkingTitleWords { get; set; }
+    public string? WorkingTitleWords
+    {
+        get
+        {
+            if (TitleWords is null || SearchTermsWords is null) return null;
+
+            return string.Join(ListSeparator, TitleWords.Where(t => SearchTermsWords.Any(st => t.Equals(st, StringComparison.OrdinalIgnoreCase))));
+        }
+    }
 
     [SheetColumn("Non-working Title Words", Order = 21)]
-    public string? NonWorkingTitleWords { get; set; }
+    public string? NonWorkingTitleWords
+    {
+        get
+        {
+            if (TitleWords is null || SearchTermsWords is null) return null;
+
+            return string.Join(ListSeparator, TitleWords.Where(t => !SearchTermsWords.Any(st => t.Equals(st, StringComparison.OrdinalIgnoreCase))));
+        }
+    }
 
     [SheetColumn("Tagging ideas (Tags)", Order = 22)]
-    public string? TaggingIdeasTags { get; set; }
+    public string? TaggingIdeasTags
+    {
+        get
+        {
+            if (SearchTerms is null || Tags is null) return null;
+
+            return string.Join(ListSeparator, SearchTerms.Where(st => !Tags.Any(t => t.Equals(st.Name, StringComparison.OrdinalIgnoreCase))));
+        }
+    }
 
     [SheetColumn("Tagging ideas (Title)", Order = 23)]
-    public string? TaggingIdeasTitle { get; set; }
+    public string? TaggingIdeasTitle
+    {
+        get
+        {
+            if (TitleWords is null || SearchTermsWords is null) return null;
+
+            return string.Join(ListSeparator, SearchTermsWords.Where(st => !TitleWords.Any(t => t.Equals(st, StringComparison.OrdinalIgnoreCase))));
+        }
+    }
+
+    [SheetColumn("Category", Order = 24)] public string? Category { get; set; }
+
+    [SheetColumn("Shop section", Order = 25)]
+    public string? ShopSection { get; set; }
 }
