@@ -12,7 +12,7 @@ namespace EtsyStats.Services;
 public class EtsyParser
 {
     // TODO use appsettings.jsom
-    private const string UserDataDirectory = "C:\\Users\\USER2\\AppData\\Local\\Google\\Chrome\\User Data";
+    private const string UserDataDirectory = "C:\\Users\\Administrator\\AppData\\Local\\Google\\Chrome\\User Data";
     private const string UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36";
 
     private const string Href = "href";
