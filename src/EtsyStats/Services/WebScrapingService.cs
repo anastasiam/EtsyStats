@@ -1,15 +1,15 @@
 using EtsyStats.Extensions;
 using OpenQA.Selenium;
-using OpenQA.Selenium.Chrome;
 using OpenQA.Selenium.Support.UI;
+using Selenium.Extensions;
 
 namespace EtsyStats.Services;
 
 public class WebScrapingService
 {
-    private readonly ChromeDriver _chromeDriver;
+    private readonly SlDriver _chromeDriver;
 
-    public WebScrapingService(ChromeDriver chromeDriver)
+    public WebScrapingService(SlDriver chromeDriver)
     {
         _chromeDriver = chromeDriver;
     }

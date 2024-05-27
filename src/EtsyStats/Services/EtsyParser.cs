@@ -6,6 +6,8 @@ using EtsyStats.Models.Enums;
 using HtmlAgilityPack;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
+using Selenium.Extensions;
+using Selenium.WebDriver.UndetectedChromeDriver;
 
 namespace EtsyStats.Services;
 
@@ -18,12 +20,12 @@ public class EtsyParser
     private const string Href = "href";
     private const string Src = "src";
 
-    private readonly ChromeDriver _chromeDriver;
+    private readonly SlDriver _chromeDriver;
     private readonly WebScrapingService _webScrapingService;
 
     public EtsyParser(string chromeLocation)
     {
-        _chromeDriver = GetChromeDriver(chromeLocation);
+        _chromeDriver = GetUndetectableChromeDriver(chromeLocation);
         _webScrapingService = new WebScrapingService(_chromeDriver);
     }
 
@@ -139,7 +141,7 @@ public class EtsyParser
         await ParseStatsPageSearchTerms(listing, htmlDoc);
     }
 
-    private static void ParseStatsPageGeneralData(ListingStats listing, HtmlDocument htmlDoc)
+    private void ParseStatsPageGeneralData(ListingStats listing, HtmlDocument htmlDoc)
     {
         var statsDataDropdown = htmlDoc.DocumentNode.SelectSingleNode(ListingStatsPageXPaths.GeneralDataDropdown);
 
@@ -149,7 +151,7 @@ public class EtsyParser
         listing.Revenue = decimal.Parse(statsDataDropdown.SelectSingleNode(ListingStatsPageXPaths.RevenueDropdownElement).InnerText.ExtractNumber());
     }
 
-    private static void ParseStatsPageTrafficSources(ListingStats listing, HtmlDocument htmlDoc)
+    private void ParseStatsPageTrafficSources(ListingStats listing, HtmlDocument htmlDoc)
     {
         var trafficSourcesList = htmlDoc.DocumentNode.SelectSingleNode(ListingStatsPageXPaths.TrafficSourcesList);
 
@@ -191,7 +193,14 @@ public class EtsyParser
         }
     }
 
-    private static ChromeDriver GetChromeDriver(string chromeLocation)
+    private SlDriver GetUndetectableChromeDriver(string chromeLocation)
+    {
+        var options = ChromeOptions(chromeLocation);
+
+        return UndetectedChromeDriver.Instance("Пользователь 1", options);
+    }
+
+    private static ChromeOptions ChromeOptions(string chromeLocation)
     {
         var options = new ChromeOptions
         {
@@ -205,7 +214,6 @@ public class EtsyParser
         options.AddArguments("--profile-directory=Пользователь 1");
         options.AddArguments($"--user-data-dir={UserDataDirectory}");
 
-        var chrome = new ChromeDriver(options);
-        return chrome;
+        return options;
     }
 }

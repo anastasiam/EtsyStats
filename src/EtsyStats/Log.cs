@@ -7,8 +7,13 @@ public static class Log
     {
         var nextLineMessage = $"\r\n{message}";
         await File.AppendAllTextAsync("logs/logs.txt",$"{DateTime.Now}: ----- {nextLineMessage}");
+        await Debug(nextLineMessage);
+    }
+
+    public static async Task Debug(string message)
+    {
 #if DEBUG
-        await ProgramHelper.OriginalOut.WriteLineAsync(nextLineMessage);
+        await ProgramHelper.OriginalOut.WriteLineAsync(message);
 #endif
     }
 }
