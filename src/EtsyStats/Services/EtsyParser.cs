@@ -22,36 +22,40 @@ public class EtsyParser
 
     private readonly SlDriver _chromeDriver;
     private readonly WebScrapingService _webScrapingService;
+    private readonly Config _config;
 
-    public EtsyParser(string chromeLocation)
+    public EtsyParser(string chromeLocation, Config config)
     {
+        _config = config;
         _chromeDriver = GetUndetectableChromeDriver(chromeLocation);
         _webScrapingService = new WebScrapingService(_chromeDriver);
     }
 
-    public async Task<List<ListingStats>> GetListingsStats(string shop, DateRange dateRange)
+    public async Task<List<ListingStats>> GetListingsStats(DateRange dateRange)
     {
         List<ListingStats> listings = new();
 
         for (var page = 1;; page++)
         {
-            var url = EtsyUrl.GetListingsUrl(shop, page, dateRange);
+            var url = EtsyUrl.GetListingsUrl(page);
 
             var html = await _webScrapingService.NavigateAndLoadHtmlFromUrl(url, ListingsPageXPaths.ListingsListElement, ListingsPageXPaths.EmptyStateDiv);
             if (html == null)
             {
-                Console.WriteLine("Finished parsing listings.");
+                await ProgramHelper.OriginalOut.WriteLineAsync("Finished parsing listings.");
                 return listings;
             }
 
-            var pageListings = await GetListingsFromPage(shop, html);
+            var pageListings = await GetListingsFromPage(html, dateRange);
             listings.AddRange(pageListings);
         }
+
+        return listings;
     }
 
-    public async Task<List<SearchQueryAnalytics>> GetSearchAnalytics(string shop, DateRange dateRange)
+    public async Task<List<SearchQueryAnalytics>> GetSearchAnalytics(DateRange dateRange)
     {
-        var url = EtsyUrl.GetSearchAnalyticsUrl(shop, dateRange);
+        var url = EtsyUrl.GetSearchAnalyticsUrl(dateRange);
         await _webScrapingService.NavigateAndLoadHtmlFromUrl(url, SearchAnalyticsPageXPaths.SearchQueryFirstTableCellFullXPath);
 
         List<SearchQueryAnalytics> searchAnalytics = new();
@@ -88,7 +92,7 @@ public class EtsyParser
         return searchAnalytics;
     }
 
-    private async Task<List<ListingStats>> GetListingsFromPage(string shop, string html)
+    private async Task<List<ListingStats>> GetListingsFromPage(string html, DateRange dateRange)
     {
         var htmlDocument = new HtmlDocument();
         htmlDocument.LoadHtml(html);
@@ -99,7 +103,7 @@ public class EtsyParser
         {
             var link = listingElement.SelectSingleNode(ListingsPageXPaths.ListingLink).Attributes[Href].Value;
             var id = EtsyUrl.GetListingIdFromLink(link);
-            var url = EtsyUrl.GetListingStatsUrl(shop, id);
+            var url = EtsyUrl.GetListingStatsUrl(id, dateRange);
 
             var listingStatsHtml = await _webScrapingService.NavigateAndLoadHtmlFromUrl(url, ListingStatsPageXPaths.Title);
 
@@ -197,10 +201,10 @@ public class EtsyParser
     {
         var options = ChromeOptions(chromeLocation);
 
-        return UndetectedChromeDriver.Instance("Пользователь 1", options);
+        return UndetectedChromeDriver.Instance(_config.ChromeProfile, options);
     }
 
-    private static ChromeOptions ChromeOptions(string chromeLocation)
+    private ChromeOptions ChromeOptions(string chromeLocation)
     {
         var options = new ChromeOptions
         {
@@ -211,7 +215,7 @@ public class EtsyParser
         options.AddArguments($"--user-agent={UserAgent}");
 
         // TODO use login, password
-        options.AddArguments("--profile-directory=Пользователь 1");
+        options.AddArguments($"--profile-directory={_config.ChromeProfile}");
         options.AddArguments($"--user-data-dir={UserDataDirectory}");
 
         return options;

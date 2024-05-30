@@ -11,15 +11,17 @@ public class EtsyDataUploadService
     private const string ShopPlaceholder = "{shop}";
 
     private readonly GoogleSheetService _googleSheetService;
+    private readonly Config _config;
 
-    public EtsyDataUploadService()
+    public EtsyDataUploadService(Config config)
     {
+        _config = config;
         _googleSheetService = new GoogleSheetService();
     }
 
-    public async Task WriteListingsStatsToGoogleSheet(string sheetId, string shopName, List<ListingStats> listings)
+    public async Task WriteListingsStatsToGoogleSheet(string sheetId, List<ListingStats> listings)
     {
-        var tabName = StatsTab.Replace(ShopPlaceholder, shopName);
+        var tabName = StatsTab.Replace(ShopPlaceholder, _config.ShopName);
         await _googleSheetService.WriteDataToSheet(sheetId, tabName, listings);
     }
 
@@ -27,11 +29,10 @@ public class EtsyDataUploadService
     /// Writes data to "{shopName} - Analytics" tab. Creates tab if doesn't exist.
     /// </summary>
     /// <param name="sheetId">Google Sheet identifier</param>
-    /// <param name="shopName">Shop name</param>
     /// <param name="searchAnalytics">List of analytics per search query</param>
-    public async Task WriteSearchAnalyticsToGoogleSheet(string sheetId, string shopName, List<SearchQueryAnalytics> searchAnalytics)
+    public async Task WriteSearchAnalyticsToGoogleSheet(string sheetId, List<SearchQueryAnalytics> searchAnalytics)
     {
-        var tabName = SearchAnalyticsTab.Replace(ShopPlaceholder, shopName);
+        var tabName = SearchAnalyticsTab.Replace(ShopPlaceholder, _config.ShopName);
 
         try
         {

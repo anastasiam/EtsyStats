@@ -4,43 +4,27 @@ namespace EtsyStats.Helpers;
 
 public static class EtsyUrl
 {
-    private const string ListingsUrl = $"https://www.etsy.com/your/shops/{ShopPlaceholder}/tools/listings/page:{PagePlaceholder},stats:true";
-    private const string ListingStatsUrl = $"https://www.etsy.com/your/shops/{ShopPlaceholder}/stats/listings/{IdPlaceholder}?{DateRangePlaceholder}";
-    private const string SearchAnalyticsUrl = $"https://www.etsy.com/your/shops/me/search-analytics?{DateRangePlaceholder}";
-    private const string ListingLinkUrl = $"https://www.etsy.com/listing/{IdPlaceholder}";
-
-    private const string DateRangePlaceholder = "{dateRange}";
-    private const string ShopPlaceholder = "{shop}";
-    private const string PagePlaceholder = "{page}";
-    private const string IdPlaceholder = "{id}";
-    
     private const string UrlSeparator = "/";
 
-    public static string GetListingsUrl(string shop, int page, DateRange dateRange)
+    public static string GetListingsUrl(int page)
     {
-        return ListingsUrl
-            .Replace(ShopPlaceholder, shop)
-            .Replace(PagePlaceholder, page.ToString())
-            .Replace(DateRangePlaceholder, DateRangeQueryParameter.GetQuery(dateRange));
+        return $"https://www.etsy.com/your/shops/me/tools/listings/page:{page},stats:true";
     }
 
-    public static string GetListingStatsUrl(string shop, string id)
+    public static string GetListingStatsUrl(string id, DateRange dateRange)
     {
-        return ListingStatsUrl
-            .Replace(ShopPlaceholder, shop)
-            .Replace(IdPlaceholder, id);
+        return $"https://www.etsy.com/your/shops/me/stats/listings/{id}?{DateRangeQueryParameter.GetQueryStats(dateRange)}";
     }
 
-    public static string GetSearchAnalyticsUrl(string shop, DateRange dateRange)
+    public static string GetSearchAnalyticsUrl(DateRange dateRange)
     {
-        return SearchAnalyticsUrl
-            .Replace(ShopPlaceholder, shop)
-            .Replace(DateRangePlaceholder, DateRangeQueryParameter.GetQuery(dateRange));
+        return $"https://www.etsy.com/your/shops/me/search-analytics?{DateRangeQueryParameter.GetQueryAnalytics(dateRange)}";
+        
     }
 
     public static string GetListingUrl(string id)
     {
-        return ListingLinkUrl.Replace(IdPlaceholder, id);
+        return $"https://www.etsy.com/listing/{id}";
     }
 
     public static string GetListingIdFromLink(string url)
