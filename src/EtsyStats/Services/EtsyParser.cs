@@ -3,6 +3,7 @@ using EtsyStats.Extensions;
 using EtsyStats.Helpers;
 using EtsyStats.Models;
 using EtsyStats.Models.Enums;
+using EtsyStats.Models.Options;
 using HtmlAgilityPack;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
@@ -24,10 +25,10 @@ public class EtsyParser
     private readonly WebScrapingService _webScrapingService;
     private readonly Config _config;
 
-    public EtsyParser(string chromeLocation, Config config)
+    public EtsyParser(GoogleChromeOptions googleChromeOptions, Config config)
     {
         _config = config;
-        _chromeDriver = GetUndetectableChromeDriver(chromeLocation);
+        _chromeDriver = GetUndetectableChromeDriver(googleChromeOptions.ChromeLocation);
         _webScrapingService = new WebScrapingService(_chromeDriver);
     }
 
