@@ -25,9 +25,8 @@ public static class ListingStatsPageXPaths
     public const string SearchTermsTable = "//table[@id='horizontal-chart4']";
     public const string SearchTermRow = "//tr[not(contains(@class, 'column-header'))]";
     public const string SearchTermCell = "td/div/div[1]/div[1]/span[1]";
-    public const string TotalVisitsColumn = $"//div[contains(text(), '{TotalVisits}')]";
     public const string TotalVisitsCell = "td/div/div[1]/div[2]/div[3]";
-    public const string VisitsCell = "td/div/div[1]/div[2]/div[3]";
+    public const string VisitsCell = "td/div/div[1]/div[2]";
     public const string SearchTermAnyCellFullXPath = $"{SearchTermsTable}{SearchTermRow}/{SearchTermCell}";
     public const string SearchTermsNextButton = $"{SearchTermsTable}/../..//button[@title='{NextPage}']";
 

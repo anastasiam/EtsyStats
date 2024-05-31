@@ -6,7 +6,7 @@ public abstract class EtsyUrl
 {
     private const string UrlSeparator = "/";
 
-    public static string Listings(string shop, int page)
+    public static string Listings(int page)
     {
         return $"https://www.etsy.com/your/shops/me/tools/listings/page:{page},stats:true";
     }
@@ -16,19 +16,19 @@ public abstract class EtsyUrl
         return $"https://www.etsy.com/listing/{id}";
     }
 
-    public static string ListingStats(string shop, string id, DateRange dateRange)
+    public static string ListingStats(string id, DateRange dateRange)
     {
-        return $"https://www.etsy.com/your/shops/{shop}/stats/listings/{id}?{dateRange}";
+        return $"https://www.etsy.com/your/shops/me/stats/listings/{id}?{dateRange}";
     }
 
-    public static string ListingEdit(string shop, string id)
+    public static string ListingEdit(string id)
     {
-        return $"https://www.etsy.com/your/shops/{shop}/listing-editor/edit/{id}";
+        return $"https://www.etsy.com/your/shops/me/listing-editor/edit/{id}";
     }
 
-    public static string SearchAnalytics(string shop, DateRange dateRange)
+    public static string SearchAnalytics(DateRange dateRange)
     {
-        return $"https://www.etsy.com/your/shops/{shop}/search-analytics?{dateRange}";
+        return $"https://www.etsy.com/your/shops/me/search-analytics?{dateRange}";
     }
 
     public static string GetListingIdFromLink(string url)

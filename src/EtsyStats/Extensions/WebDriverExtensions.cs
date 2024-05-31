@@ -23,6 +23,7 @@ public static class WebDriverExtensions
     private static async Task TaskDelay()
     {
         var milliseconds = Random.Next(Settings.MinDelayInMilliseconds, Settings.MaxDelayInMilliseconds);
+        await Log.Debug($"\n Waiting {milliseconds / 1000} seconds \n");
         await Task.Delay(milliseconds);
     }
 }
