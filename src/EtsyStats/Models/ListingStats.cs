@@ -116,7 +116,7 @@ public class ListingStats
         {
             if (SearchTerms is null || Tags is null) return null;
 
-            return string.Join(ListSeparator, SearchTerms.Where(st => !Tags.Any(t => t.Equals(st.Name, StringComparison.OrdinalIgnoreCase))));
+            return string.Join(ListSeparator, SearchTerms.Where(st => !Tags.Any(t => t.Equals(st.Name, StringComparison.OrdinalIgnoreCase))).Select(st => st.Name));
         }
     }
 

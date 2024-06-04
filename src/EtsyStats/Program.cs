@@ -1,5 +1,6 @@
 // See https://aka.ms/new-console-template for more information
 
+using System.Globalization;
 using EtsyStats.Models;
 using EtsyStats.Models.Options;
 using EtsyStats.Services;
@@ -25,7 +26,7 @@ Console.WriteLine("You should not see this");
         Startup.SetupLogs();
 
         // TODO var environmentName = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT");
-        var environmentName = "Development";
+        var environmentName = "Staging";
 
         var builder = new ConfigurationBuilder()
             .AddJsonFile("appsettings.json", true, false)
@@ -41,6 +42,8 @@ Console.WriteLine("You should not see this");
         var configurationOptions = configuration.GetSection(ConfigurationOptions.SectionName).Get<ConfigurationOptions>();
         var googleChromeOptions = configuration.GetSection(GoogleChromeOptions.SectionName).Get<GoogleChromeOptions>();
         var googleSheetsOptions = configuration.GetSection(GoogleSheetsOptions.SectionName).Get<GoogleSheetsOptions>();
+
+        CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
 
         var config = FirstTimeLaunchConfigure(applicationOptions);
 
@@ -116,8 +119,8 @@ Console.WriteLine("You should not see this");
         {
             Directory.CreateDirectory($"{appDataFolder}/{applicationOptions.UserDataDirectory}");
             ProgramHelper.OriginalOut.WriteLine("\nYou're using EtsyStats for the firs time. " +
-                                                "Lets set you up. Please type following data bellow" +
-                                                "\nGoogle Chrome profile name where you signed in to etsy.com:");
+                                                "Lets set you up. Please type following data bellow." +
+                                                "\n\nGoogle Chrome profile name where you signed in to etsy.com:");
             var chromeProfile = Console.ReadLine();
 
             ProgramHelper.OriginalOut.WriteLine("\nYour shop name:");

@@ -230,7 +230,7 @@ public class EtsyParser
         };
 
         options.AddArguments("headless");
-        // options.AddArguments($"--user-agent={UserAgent}");
+        options.AddArguments($"--user-agent={UserAgent}");
 
         // TODO use login, password
         options.AddArguments($"--profile-directory={_config.ChromeProfile}");

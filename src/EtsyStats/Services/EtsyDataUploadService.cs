@@ -19,10 +19,23 @@ public class EtsyDataUploadService
         _googleSheetService = new GoogleSheetService();
     }
 
+    /// <summary>
+    /// Writes data to "{shopName} - Stats" tab. Creates tab if doesn't exist.
+    /// </summary>
+    /// <param name="sheetId">Google Sheet identifier</param>
+    /// <param name="listings">List of listings</param>
     public async Task WriteListingsStatsToGoogleSheet(string sheetId, List<ListingStats> listings)
     {
         var tabName = StatsTab.Replace(ShopPlaceholder, _config.ShopName);
-        await _googleSheetService.WriteDataToSheet(sheetId, tabName, listings);
+        try
+        {
+            await _googleSheetService.WriteDataToSheet(sheetId, tabName, listings);
+        }
+        catch (GoogleApiException)
+        {
+            await _googleSheetService.CreateTab(sheetId, tabName);
+            await _googleSheetService.WriteDataToSheet(sheetId, tabName, listings);
+        }
     }
 
     /// <summary>

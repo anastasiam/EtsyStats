@@ -18,7 +18,7 @@ public abstract class EtsyUrl
 
     public static string ListingStats(string id, DateRange dateRange)
     {
-        return $"https://www.etsy.com/your/shops/me/stats/listings/{id}?{dateRange}";
+        return $"https://www.etsy.com/your/shops/me/stats/listings/{id}?{DateRangeQueryParameter.GetQueryStats(dateRange)}";
     }
 
     public static string ListingEdit(string id)
@@ -28,7 +28,7 @@ public abstract class EtsyUrl
 
     public static string SearchAnalytics(DateRange dateRange)
     {
-        return $"https://www.etsy.com/your/shops/me/search-analytics?{dateRange}";
+        return $"https://www.etsy.com/your/shops/me/search-analytics?{DateRangeQueryParameter.GetQueryAnalytics(dateRange)}";
     }
 
     public static string GetListingIdFromLink(string url)
