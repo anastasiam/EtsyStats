@@ -105,7 +105,7 @@ Console.WriteLine("You should not see this");
                 }
                 catch (Exception e)
                 {
-                    await ProgramHelper.OriginalOut.WriteLineAsync("\nSomething went wrong. Unexpected error has occured :(");
+                    await ProgramHelper.OriginalOut.WriteLineAsync("\nSomething went wrong. Unexpected error has occured :(\n\n");
                     await Log.Debug("See logs/logs.txt.");
                     await Log.Error(e.GetBaseException().ToString());
                 }
@@ -113,7 +113,7 @@ Console.WriteLine("You should not see this");
         }
         catch (Exception e)
         {
-            await ProgramHelper.OriginalOut.WriteLineAsync("\nSomething went wrong. Unexpected error has occured :(");
+            await ProgramHelper.OriginalOut.WriteLineAsync("\nSomething went wrong. Unexpected error has occured :(\n\n");
             await Log.Debug("See logs/logs.txt.");
             await Log.Error(e.GetBaseException().ToString());
         }
