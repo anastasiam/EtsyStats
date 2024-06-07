@@ -84,7 +84,7 @@ public class ListingStats
         }
     }
 
-    private IEnumerable<string?>? SearchTermsWords => SearchTerms?.SelectMany(st => st.Name?.Split(WordsSeparator, StringSplitOptions.RemoveEmptyEntries));
+    private IEnumerable<string?>? SearchTermsWords => SearchTerms?.SelectMany(st => st.Name?.Split(WordsSeparator, StringSplitOptions.RemoveEmptyEntries) ?? Array.Empty<string>());
     private IEnumerable<string>? TitleWords => Title?.ReplaceSpecialCharacters(WordsSeparator).Split(WordsSeparator, StringSplitOptions.RemoveEmptyEntries);
     
     [SheetColumn("Working Title Words", Order = 20)]
