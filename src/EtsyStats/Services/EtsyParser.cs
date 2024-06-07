@@ -98,8 +98,10 @@ public class EtsyParser
         var listingsElements = htmlDocument.DocumentNode.SelectNodes(ListingsPageXPaths.ListingsListElement);
 
         List<ListingStats> listings = new();
-        foreach (var listingElement in listingsElements)
+        for (var i = 0; i < listingsElements.Count; i++)
         {
+            var listingElement = listingsElements[i];
+            await ProgramHelper.OriginalOut.WriteLineAsync($"\nProcessing listing {i} out of  {listingsElements.Count + 1}...\n");
             var editUrl = listingElement.SelectSingleNode(ListingsPageXPaths.ListingLink).Attributes[Href].Value;
             var id = EtsyUrl.GetListingIdFromLink(editUrl);
 
@@ -115,7 +117,7 @@ public class EtsyParser
             }
             catch (Exception e)
             {
-                await ProgramHelper.OriginalOut.WriteLineAsync($"An error occured while parsing listing {id}.");
+                await ProgramHelper.OriginalOut.WriteLineAsync($"\nAn error occured while parsing listing {id}.");
                 await Log.Error($"Exception on parsing stats for listing {id}.\r\n{e.GetBaseException()}");
                 throw;
             }
