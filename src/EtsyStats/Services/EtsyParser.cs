@@ -101,7 +101,7 @@ public class EtsyParser
         for (var i = 0; i < listingsElements.Count; i++)
         {
             var listingElement = listingsElements[i];
-            await ProgramHelper.OriginalOut.WriteLineAsync($"\nProcessing listing {i} out of  {listingsElements.Count + 1}...\n");
+            await ProgramHelper.OriginalOut.WriteLineAsync($"\nProcessing listing {i + 1} out of  {listingsElements.Count}...\n");
             var editUrl = listingElement.SelectSingleNode(ListingsPageXPaths.ListingLink).Attributes[Href].Value;
             var id = EtsyUrl.GetListingIdFromLink(editUrl);
 
