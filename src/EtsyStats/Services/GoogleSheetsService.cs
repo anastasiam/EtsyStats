@@ -10,9 +10,7 @@ public class GoogleSheetService
 {
     // TODO put in appsettings.json
     private const string GoogleCredentialsFileName = "google-credentials.json";
-    private const string AllRowsRange = $"{TabNamePlaceholder}!A1:Z";
     private const string RowsDimension = "ROWS";
-    private const string TabNamePlaceholder = "{tabName}";
     private static readonly string[] Scopes = { SheetsService.Scope.Spreadsheets };
 
     private readonly SheetsService _sheetsService;
@@ -32,7 +30,7 @@ public class GoogleSheetService
     {
         var valuesResource = _sheetsService.Spreadsheets.Values;
 
-        var clear = valuesResource.Clear(new ClearValuesRequest(), sheetId, AllRowsRange.Replace(TabNamePlaceholder, tabName));
+        var clear = valuesResource.Clear(new ClearValuesRequest(), sheetId, GetAllRange(tabName));
         await clear.ExecuteAsync();
 
         var properties = typeof(T).GetProperties()
@@ -83,6 +81,11 @@ public class GoogleSheetService
         var lastColumnName = GetGoogleSheetColumnName(columnsCount);
 
         return $"{tabName}!A1:{lastColumnName}{rowsCount + 2}";
+    }
+
+    private string GetAllRange(string tabName)
+    {
+        return $"{tabName}!A1:Z";
     }
 
     private string GetGoogleSheetColumnName(int columnNumber)
