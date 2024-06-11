@@ -12,7 +12,6 @@ public static class DateRangeQueryParameter
     private const string LastMonth = "dateRange=last-month";
     private const string ThisYear = "dateRange=this-year";
     private const string LastYear = "dateRange=last-year";
-    private const string Last30Days = $"dateRange=undefined&startDate={StartDatePlaceholder}&endDate={EndDatePlaceholder}";
 
     private const string TodayStats = "date_range=today";
     private const string YesterdayStats = "date_range=yesterday";
@@ -21,7 +20,7 @@ public static class DateRangeQueryParameter
     private const string ThisMonthStats = "date_range=this_month";
     private const string ThisYearStats = "date_range=this_year";
     private const string LastYearStats = "date_range=last_year";
-    private const string AllTimeStats = "?date_range=all_time";
+    private const string AllTimeStats = "date_range=all_time";
 
     public static string? GetQueryAnalytics(DateRange dateRange)
     {
@@ -39,7 +38,7 @@ public static class DateRangeQueryParameter
                 var startDate = HttpUtility.UrlEncode(DateTime.Now.AddDays(-30).ToString(DateFormat));
                 var endDate = HttpUtility.UrlEncode(DateTime.Now.ToString(DateFormat));
 
-                return Last30Days.Replace(StartDatePlaceholder, startDate).Replace(EndDatePlaceholder, endDate);
+                return $"dateRange=undefined&startDate={startDate}&endDate={endDate}";
             case DateRange.Unknown:
             default:
                 return null;
