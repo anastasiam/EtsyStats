@@ -9,7 +9,9 @@ public static class StringExtensions
 
     public static string ExtractNumber(this string str)
     {
-        return Regex.Match(str, NumberPattern).Value;
+        var matches = Regex.Matches(str, NumberPattern);
+
+        return string.Join(string.Empty, matches.Select(m => m.Value));
     }
 
     public static string ReplaceSpecialCharacters(this string str, string wordSeparator)

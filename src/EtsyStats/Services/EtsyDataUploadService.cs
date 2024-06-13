@@ -31,9 +31,9 @@ public class EtsyDataUploadService
         {
             await _googleSheetService.WriteDataToSheet(sheetId, tabName, listings);
         }
-        catch (GoogleApiException e)
+        catch (GoogleApiException)
         {
-            await Log.Error($"GoogleApiException. Creating a new tab.\n\r{e.GetBaseException()}");
+            await ProgramHelper.OriginalOut.WriteLineAsync($"Creating a new tab: {tabName}");
 
             // TODO Create new Tab without exception
             await _googleSheetService.CreateTab(sheetId, tabName);
@@ -54,9 +54,9 @@ public class EtsyDataUploadService
         {
             await _googleSheetService.WriteDataToSheet(sheetId, tabName, searchAnalytics);
         }
-        catch (GoogleApiException e)
+        catch (GoogleApiException)
         {
-            await Log.Error($"GoogleApiException. Creating a new tab.\n\r{e.GetBaseException()}");
+            await ProgramHelper.OriginalOut.WriteLineAsync($"Creating a new tab: {tabName}");
 
             // TODO Create new Tab without exception
             await _googleSheetService.CreateTab(sheetId, tabName);
