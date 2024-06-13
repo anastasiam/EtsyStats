@@ -156,17 +156,15 @@ public class EtsyParser
         htmlDoc.LoadHtml(html);
 
         var tags = htmlDoc.DocumentNode.SelectNodes(ListingEditPageXPaths.Tag);
-        listing.Tags = tags.Select(t => t.InnerText.Trim()).ToList();
-
         var categories = htmlDoc.DocumentNode.SelectNodes(ListingEditPageXPaths.Category);
-        listing.Category = string.Join(CategorySeparator, categories.Select(c => c.InnerText.Trim()));
-
         var shopSectionSelector = new SelectElement(_chromeDriver.FindElement(By.XPath(ListingEditPageXPaths.ShopSection)));
 
         if (tags is not null)
             listing.Tags = tags.Select(t => t.InnerText.Trim()).ToList();
 
-        listing.Category = string.Join(CategorySeparator, categories.Select(c => c.InnerText.Trim()));
+        if (categories is not null)
+            listing.Category = string.Join(CategorySeparator, categories.Select(c => c.InnerText.Trim()));
+
         listing.ShopSection = shopSectionSelector.SelectedOption.Text;
     }
 
