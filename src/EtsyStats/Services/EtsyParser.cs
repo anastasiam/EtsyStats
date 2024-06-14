@@ -36,20 +36,21 @@ public class EtsyParser
     {
         List<ListingStats> listings = new();
 
-        for (var page = 1;; page++)
+        // for (var page = 1;; page++)
+        // {
+        var url = EtsyUrl.Listings(1);
+
+        var html = await _webScrapingService.NavigateAndLoadHtmlFromUrl(url, ListingsPageXPaths.ListingsListElement, ListingsPageXPaths.EmptyStateDiv);
+        if (html == null)
         {
-            var url = EtsyUrl.Listings(page);
-
-            var html = await _webScrapingService.NavigateAndLoadHtmlFromUrl(url, ListingsPageXPaths.ListingsListElement, ListingsPageXPaths.EmptyStateDiv);
-            if (html == null)
-            {
-                await ProgramHelper.OriginalOut.WriteLineAsync("Finished parsing listings.");
-                return listings;
-            }
-
-            var pageListings = await GetListingsFromPage(html, dateRange);
-            listings.AddRange(pageListings);
+            await ProgramHelper.OriginalOut.WriteLineAsync("Finished parsing listings.");
+            return listings;
         }
+
+        var pageListings = await GetListingsFromPage(html, dateRange);
+        listings.AddRange(pageListings);
+        // }
+        return listings;
     }
 
     public async Task<List<SearchQueryAnalytics>> GetSearchAnalytics(DateRange dateRange)
@@ -98,32 +99,33 @@ public class EtsyParser
         var listingsElements = htmlDocument.DocumentNode.SelectNodes(ListingsPageXPaths.ListingsListElement);
 
         List<ListingStats> listings = new();
-        for (var i = 0; i < listingsElements.Count; i++)
+        // for (var i = 0; i < listingsElements.Count; i++)
+        // {
+        var i = 0;
+        var listingElement = listingsElements[i];
+        await ProgramHelper.OriginalOut.WriteLineAsync($"\nProcessing listing {i + 1} out of  {listingsElements.Count}...\n");
+        var editUrl = listingElement.SelectSingleNode(ListingsPageXPaths.ListingLink).Attributes[Href].Value;
+        var id = EtsyUrl.GetListingIdFromLink(editUrl);
+
+        var listing = new ListingStats
         {
-            var listingElement = listingsElements[i];
-            await ProgramHelper.OriginalOut.WriteLineAsync($"\nProcessing listing {i + 1} out of  {listingsElements.Count}...\n");
-            var editUrl = listingElement.SelectSingleNode(ListingsPageXPaths.ListingLink).Attributes[Href].Value;
-            var id = EtsyUrl.GetListingIdFromLink(editUrl);
+            Link = EtsyUrl.Listing(id)
+        };
 
-            var listing = new ListingStats
-            {
-                Link = EtsyUrl.Listing(id)
-            };
-
-            try
-            {
-                await LoadListingFromStatsPage(id, dateRange, listing);
-                await LoadListingFromEditPage(id, listing);
-            }
-            catch (Exception e)
-            {
-                await ProgramHelper.OriginalOut.WriteLineAsync($"\nAn error occured while parsing listing {id}.");
-                await Log.Error($"Exception on parsing stats for listing {id}.\r\n{e.GetBaseException()}");
-                throw;
-            }
-
-            listings.Add(listing);
+        try
+        {
+            await LoadListingFromStatsPage(id, dateRange, listing);
+            await LoadListingFromEditPage(id, listing);
         }
+        catch (Exception e)
+        {
+            await ProgramHelper.OriginalOut.WriteLineAsync($"\nAn error occured while parsing listing {id}.");
+            await Log.Error($"Exception on parsing stats for listing {id}.\r\n{e.GetBaseException()}");
+            throw;
+        }
+
+        listings.Add(listing);
+        // }
 
         return listings;
     }
@@ -132,7 +134,7 @@ public class EtsyParser
     {
         var url = EtsyUrl.ListingStats(id, dateRange);
         var html = await _webScrapingService.NavigateAndLoadHtmlFromUrl(url, ListingStatsPageXPaths.Title);
-        
+
         var htmlDoc = new HtmlDocument();
         htmlDoc.LoadHtml(html);
 
@@ -228,7 +230,7 @@ public class EtsyParser
     private ChromeOptions ChromeOptions(string chromeLocation)
     {
         var userDataDirectory = $"{Environment.SpecialFolder.LocalApplicationData}/{UserDataDirectory}";
-        
+
         var options = new ChromeOptions
         {
             BinaryLocation = chromeLocation

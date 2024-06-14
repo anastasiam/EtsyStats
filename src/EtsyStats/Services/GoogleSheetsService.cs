@@ -30,6 +30,7 @@ public class GoogleSheetService
     {
         var valuesResource = _sheetsService.Spreadsheets.Values;
 
+       await Log.Error($"WriteDataToSheet sheetId: {sheetId}");
         var clear = valuesResource.Clear(new ClearValuesRequest(), sheetId, GetAllRange(tabName));
         await clear.ExecuteAsync();
 
@@ -65,6 +66,7 @@ public class GoogleSheetService
 
     public async Task CreateTab(string sheetId, string tabName)
     {
+        Console.WriteLine($"CreateTab sheetId: {sheetId}");
         var request = new BatchUpdateSpreadsheetRequest
         {
             Requests = new List<Request>

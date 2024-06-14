@@ -26,6 +26,7 @@ public class EtsyDataUploadService
     /// <param name="listings">List of listings</param>
     public async Task WriteListingsStatsToGoogleSheet(string sheetId, List<ListingStats> listings)
     {
+        await Log.Error($"WriteListingsStatsToGoogleSheet sheetId: {sheetId}");
         var tabName = StatsTab.Replace(ShopPlaceholder, _config.ShopName);
         try
         {

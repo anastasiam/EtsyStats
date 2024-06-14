@@ -82,6 +82,7 @@ Console.WriteLine("You should not see this");
                             // var data = new List<ListingStats> { listing };
 
                             await ProgramHelper.OriginalOut.WriteLineAsync("\nWriting data to Google Sheets...");
+                            await Log.Error($"WriteDataToSheet googleSheetsOptions sheetId: {googleSheetsOptions.SheetId}");
                             await etsyDataUploadService.WriteListingsStatsToGoogleSheet(googleSheetsOptions.SheetId, data);
 
                             await ProgramHelper.OriginalOut.WriteLineAsync("\nListings were uploaded successfully.");
