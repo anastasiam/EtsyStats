@@ -36,21 +36,20 @@ public class EtsyParser
     {
         List<ListingStats> listings = new();
 
-        // for (var page = 1;; page++)
-        // {
-        var url = EtsyUrl.Listings(1);
-
-        var html = await _webScrapingService.NavigateAndLoadHtmlFromUrl(url, ListingsPageXPaths.ListingsListElement, ListingsPageXPaths.EmptyStateDiv);
-        if (html == null)
+        for (var page = 1;; page++)
         {
-            await ProgramHelper.OriginalOut.WriteLineAsync("Finished parsing listings.");
-            return listings;
-        }
+            var url = EtsyUrl.Listings(page);
 
-        var pageListings = await GetListingsFromPage(html, dateRange);
-        listings.AddRange(pageListings);
-        // }
-        return listings;
+            var html = await _webScrapingService.NavigateAndLoadHtmlFromUrl(url, ListingsPageXPaths.ListingsListElement, ListingsPageXPaths.EmptyStateDiv);
+            if (html == null)
+            {
+                await ProgramHelper.OriginalOut.WriteLineAsync("Finished parsing listings.");
+                return listings;
+            }
+
+            var pageListings = await GetListingsFromPage(html, dateRange);
+            listings.AddRange(pageListings);
+        }
     }
 
     public async Task<List<SearchQueryAnalytics>> GetSearchAnalytics(DateRange dateRange)
@@ -99,33 +98,32 @@ public class EtsyParser
         var listingsElements = htmlDocument.DocumentNode.SelectNodes(ListingsPageXPaths.ListingsListElement);
 
         List<ListingStats> listings = new();
-        // for (var i = 0; i < listingsElements.Count; i++)
-        // {
-        var i = 0;
-        var listingElement = listingsElements[i];
-        await ProgramHelper.OriginalOut.WriteLineAsync($"\nProcessing listing {i + 1} out of  {listingsElements.Count}...\n");
-        var editUrl = listingElement.SelectSingleNode(ListingsPageXPaths.ListingLink).Attributes[Href].Value;
-        var id = EtsyUrl.GetListingIdFromLink(editUrl);
-
-        var listing = new ListingStats
+        for (var i = 0; i < listingsElements.Count; i++)
         {
-            Link = EtsyUrl.Listing(id)
-        };
+            var listingElement = listingsElements[i];
+            await ProgramHelper.OriginalOut.WriteLineAsync($"\nProcessing listing {i + 1} out of  {listingsElements.Count}...\n");
+            var editUrl = listingElement.SelectSingleNode(ListingsPageXPaths.ListingLink).Attributes[Href].Value;
+            var id = EtsyUrl.GetListingIdFromLink(editUrl);
 
-        try
-        {
-            await LoadListingFromStatsPage(id, dateRange, listing);
-            await LoadListingFromEditPage(id, listing);
+            var listing = new ListingStats
+            {
+                Link = EtsyUrl.Listing(id)
+            };
+
+            try
+            {
+                await LoadListingFromStatsPage(id, dateRange, listing);
+                await LoadListingFromEditPage(id, listing);
+            }
+            catch (Exception e)
+            {
+                await ProgramHelper.OriginalOut.WriteLineAsync($"\nAn error occured while parsing listing {id}.");
+                await Log.Error($"Exception on parsing stats for listing {id}.\r\n{e.GetBaseException()}");
+                throw;
+            }
+
+            listings.Add(listing);
         }
-        catch (Exception e)
-        {
-            await ProgramHelper.OriginalOut.WriteLineAsync($"\nAn error occured while parsing listing {id}.");
-            await Log.Error($"Exception on parsing stats for listing {id}.\r\n{e.GetBaseException()}");
-            throw;
-        }
-
-        listings.Add(listing);
-        // }
 
         return listings;
     }
