@@ -30,7 +30,7 @@ public class GoogleSheetService
     {
         var valuesResource = _sheetsService.Spreadsheets.Values;
 
-        await Log.InfoAndConsole($"WriteDataToSheet sheetId: {(string.IsNullOrWhiteSpace(sheetId) ? "is NULL" : "is NOT NULL")}");
+        await Log.Info($"WriteDataToSheet sheetId: {(string.IsNullOrWhiteSpace(sheetId) ? "is NULL" : "is NOT NULL")}");
         var clear = valuesResource.Clear(new ClearValuesRequest(), sheetId, GetAllRange(tabName));
         await clear.ExecuteAsync();
 
