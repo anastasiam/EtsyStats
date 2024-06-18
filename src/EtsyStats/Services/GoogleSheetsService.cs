@@ -30,6 +30,7 @@ public class GoogleSheetService
     {
         var valuesResource = _sheetsService.Spreadsheets.Values;
 
+        await Log.Info($"WriteDataToSheet sheetId: {(string.IsNullOrWhiteSpace(sheetId) ? "is NULL" : "is NOT NULL")}");
         var clear = valuesResource.Clear(new ClearValuesRequest(), sheetId, GetAllRange(tabName));
         await clear.ExecuteAsync();
 
@@ -60,11 +61,14 @@ public class GoogleSheetService
         update.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.USERENTERED;
 
         var response = await update.ExecuteAsync();
-        await ProgramHelper.OriginalOut.WriteLineAsync($@"\nUpdated rows:{response.UpdatedRows}");
+        await Log.InfoAndConsole($"Updated rows:{response.UpdatedRows}");
     }
 
     public async Task CreateTab(string sheetId, string tabName)
     {
+        await Log.InfoAndConsole($"Creating a new tab: {tabName}");
+        await Log.Info($"CreateTab sheetId: {(string.IsNullOrWhiteSpace(sheetId) ? "is NULL" : "is NOT NULL")}");
+        
         var request = new BatchUpdateSpreadsheetRequest
         {
             Requests = new List<Request>
@@ -74,6 +78,8 @@ public class GoogleSheetService
         };
         var batchUpdate = _sheetsService.Spreadsheets.BatchUpdate(request, sheetId);
         await batchUpdate.ExecuteAsync();
+
+        await Log.InfoAndConsole($"Tab {tabName} was creating successfully");
     }
 
     private string GetRange(string tabName, int columnsCount, int rowsCount)

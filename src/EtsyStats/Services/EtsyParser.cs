@@ -43,7 +43,7 @@ public class EtsyParser
             var html = await _webScrapingService.NavigateAndLoadHtmlFromUrl(url, ListingsPageXPaths.ListingsListElement, ListingsPageXPaths.EmptyStateDiv);
             if (html == null)
             {
-                await ProgramHelper.OriginalOut.WriteLineAsync("Finished parsing listings.");
+                await Log.InfoAndConsole("Finished parsing listings.");
                 return listings;
             }
 
@@ -81,7 +81,7 @@ public class EtsyParser
             {
                 await Log.Error($"Exception on parsing analytics on page {page}.\r\n{e.GetBaseException()}");
                 await ProgramHelper.OriginalOut.WriteLineAsync($"An error occured on parsing analytics on page {page}.");
-                await File.AppendAllTextAsync("logs/last_search_analytics.html", _chromeDriver.PageSource);
+                await File.AppendAllTextAsync($"logs/last_search_analytics_page_{page}.html", _chromeDriver.PageSource);
                 throw;
             }
 
@@ -119,6 +119,7 @@ public class EtsyParser
             {
                 await ProgramHelper.OriginalOut.WriteLineAsync($"\nAn error occured while parsing listing {id}.");
                 await Log.Error($"Exception on parsing stats for listing {id}.\r\n{e.GetBaseException()}");
+                await File.AppendAllTextAsync($"logs/last_stats_id_{id}.html", _chromeDriver.PageSource);
                 throw;
             }
 
@@ -132,7 +133,7 @@ public class EtsyParser
     {
         var url = EtsyUrl.ListingStats(id, dateRange);
         var html = await _webScrapingService.NavigateAndLoadHtmlFromUrl(url, ListingStatsPageXPaths.Title);
-        
+
         var htmlDoc = new HtmlDocument();
         htmlDoc.LoadHtml(html);
 
@@ -228,7 +229,7 @@ public class EtsyParser
     private ChromeOptions ChromeOptions(string chromeLocation)
     {
         var userDataDirectory = $"{Environment.SpecialFolder.LocalApplicationData}/{UserDataDirectory}";
-        
+
         var options = new ChromeOptions
         {
             BinaryLocation = chromeLocation
