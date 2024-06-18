@@ -50,6 +50,7 @@ Console.WriteLine("You should not see this");
             var config = FirstTimeLaunchConfigure(applicationOptions);
 
             await ProgramHelper.OriginalOut.WriteLineAsync($"\nGoogle Chrome Profile: {config.ChromeProfile}");
+            await ProgramHelper.OriginalOut.WriteLineAsync($"Shop: {config.ShopName}");
 
             var etsyDataUploadService = new EtsyDataUploadService(config);
             var etsyParser = new EtsyParser(googleChromeOptions, config);
@@ -68,7 +69,7 @@ Console.WriteLine("You should not see this");
                         {
                             var dateRange = ProgramHelper.GetDateRangeStats();
                             // Prod
-                            await ProgramHelper.OriginalOut.WriteLineAsync("\nGetting listings stats from Etsy...\n");
+                            await Log.InfoAndConsole("Getting listings stats from Etsy...\n");
                             var data = await etsyParser.GetListingsStats(dateRange);
 
                             // Test
@@ -81,20 +82,20 @@ Console.WriteLine("You should not see this");
                             // etsyParser.LoadListingStatsFromPage(html, string.Empty, listing);
                             // var data = new List<ListingStats> { listing };
 
-                            await ProgramHelper.OriginalOut.WriteLineAsync("\nWriting data to Google Sheets...");
-                            await Log.Error($"WriteDataToSheet googleSheetsOptions sheetId: {googleSheetsOptions.SheetId}");
+                            await Log.InfoAndConsole("\nWriting data to Google Sheets...");
+                            await Log.Error($"WriteDataToSheet googleSheetsOptions sheetId: {(string.IsNullOrWhiteSpace(googleSheetsOptions.SheetId) ? "is NULL" : "is NOT NULL")}");
                             await etsyDataUploadService.WriteListingsStatsToGoogleSheet(googleSheetsOptions.SheetId, data);
 
-                            await ProgramHelper.OriginalOut.WriteLineAsync("\nListings were uploaded successfully.");
+                            await Log.InfoAndConsole("\nListings were uploaded successfully.");
                             break;
                         }
                         case "2":
                         {
                             var dateRange = ProgramHelper.GetDateRange();
-                            await ProgramHelper.OriginalOut.WriteLineAsync("\nGetting search analytics from Etsy...\n");
+                            await Log.InfoAndConsole("Getting search analytics from Etsy...\n");
                             var data = await etsyParser.GetSearchAnalytics(dateRange);
 
-                            await ProgramHelper.OriginalOut.WriteLineAsync("\nWriting data to Google Sheets...");
+                            await Log.InfoAndConsole("Writing data to Google Sheets...");
                             await etsyDataUploadService.WriteSearchAnalyticsToGoogleSheet(googleSheetsOptions.SheetId, data);
 
                             break;
@@ -106,7 +107,7 @@ Console.WriteLine("You should not see this");
                 }
                 catch (Exception e)
                 {
-                    await ProgramHelper.OriginalOut.WriteLineAsync("\nSomething went wrong. Unexpected error has occured :(\n\n");
+                    await Log.InfoAndConsole("Something went wrong. Unexpected error has occured :(\n\n");
                     await Log.Debug("See logs/logs.txt.");
                     await Log.Error(e.GetBaseException().ToString());
                 }
@@ -114,7 +115,7 @@ Console.WriteLine("You should not see this");
         }
         catch (Exception e)
         {
-            await ProgramHelper.OriginalOut.WriteLineAsync("\nSomething went wrong. Unexpected error has occured :(\n\n");
+            await Log.InfoAndConsole("Something went wrong. Unexpected error has occured :(\n\n");
             await Log.Debug("See logs/logs.txt.");
             await Log.Error(e.GetBaseException().ToString());
         }

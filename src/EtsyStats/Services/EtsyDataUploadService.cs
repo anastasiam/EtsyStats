@@ -26,7 +26,7 @@ public class EtsyDataUploadService
     /// <param name="listings">List of listings</param>
     public async Task WriteListingsStatsToGoogleSheet(string sheetId, List<ListingStats> listings)
     {
-        await Log.Error($"WriteListingsStatsToGoogleSheet sheetId: {sheetId}");
+        await Log.InfoAndConsole($"WriteListingsStatsToGoogleSheet sheetId: {(string.IsNullOrWhiteSpace(sheetId) ? "is NULL" : "is NOT NULL")}");
         var tabName = StatsTab.Replace(ShopPlaceholder, _config.ShopName);
         try
         {
@@ -34,8 +34,6 @@ public class EtsyDataUploadService
         }
         catch (GoogleApiException)
         {
-            await ProgramHelper.OriginalOut.WriteLineAsync($"Creating a new tab: {tabName}");
-
             // TODO Create new Tab without exception
             await _googleSheetService.CreateTab(sheetId, tabName);
             await _googleSheetService.WriteDataToSheet(sheetId, tabName, listings);
@@ -57,7 +55,6 @@ public class EtsyDataUploadService
         }
         catch (GoogleApiException)
         {
-            await ProgramHelper.OriginalOut.WriteLineAsync($"Creating a new tab: {tabName}");
 
             // TODO Create new Tab without exception
             await _googleSheetService.CreateTab(sheetId, tabName);
