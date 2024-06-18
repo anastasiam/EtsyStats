@@ -82,11 +82,11 @@ Console.WriteLine("You should not see this");
                             // etsyParser.LoadListingStatsFromPage(html, string.Empty, listing);
                             // var data = new List<ListingStats> { listing };
 
-                            await Log.InfoAndConsole("\nWriting data to Google Sheets...");
+                            await Log.InfoAndConsole("Writing data to Google Sheets...");
                             await Log.Info($"Program googleSheetsOptions sheetId: {(string.IsNullOrWhiteSpace(googleSheetsOptions.SheetId) ? "is NULL" : "is NOT NULL")}");
                             await etsyDataUploadService.WriteListingsStatsToGoogleSheet(googleSheetsOptions.SheetId, data);
 
-                            await Log.InfoAndConsole("\nListings were uploaded successfully.");
+                            await Log.InfoAndConsole("Listings were uploaded successfully.");
                             break;
                         }
                         case "2":
