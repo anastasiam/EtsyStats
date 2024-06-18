@@ -183,6 +183,8 @@ public class EtsyParser
     {
         var trafficSourcesList = htmlDoc.DocumentNode.SelectSingleNode(ListingStatsPageXPaths.TrafficSourcesList);
 
+        if (trafficSourcesList is null) return;
+
         listing.DirectAndOtherTraffic = trafficSourcesList.SelectSingleNode(ListingStatsPageXPaths.DirectAndOtherTraffic).InnerText.ExtractNumber();
         listing.EtsyAppAndOtherEtsyPages = trafficSourcesList.SelectSingleNode(ListingStatsPageXPaths.EtsyAppAndOtherEtsyPages).InnerText.ExtractNumber();
         listing.EtsyAds = trafficSourcesList.SelectSingleNode(ListingStatsPageXPaths.EtsyAds).InnerText.ExtractNumber();

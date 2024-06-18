@@ -12,7 +12,6 @@ public static class ListingStatsPageXPaths
     private const string EtsyMarketingAndSeoText = "Etsy marketing &amp; SEO";
     private const string SocialMediaText = "Social media";
     private const string EtsySearchText = "Etsy search";
-    private const string TotalVisits = "Total visits";
     private const string NextPage = "Next page";
 
     private const string GeneralDataDropdownElement = $"li/span/span[contains(text(), '{TextPlaceholder}')]/../div";
@@ -22,7 +21,7 @@ public static class ListingStatsPageXPaths
 
     // Search Terms
 
-    public const string SearchTermsTable = "//table[@id='horizontal-chart4']";
+    public const string SearchTermsTable = "//table[contains(@id,'horizontal-chart')]";
     public const string SearchTermRow = "//tr[not(contains(@class, 'column-header'))]";
     public const string SearchTermCell = "td/div/div[1]/div[1]/span[1]";
     public const string TotalVisitsCell = "td/div/div[1]/div[2]/div[3]";
