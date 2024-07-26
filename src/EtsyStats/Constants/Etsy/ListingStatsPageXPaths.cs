@@ -6,10 +6,10 @@ public static class ListingStatsPageXPaths
     private const string TotalViewsText = "Total Views";
     private const string OrdersText = "Orders";
     private const string RevenueText = "Revenue";
-    private const string DirectAndOtherTrafficText = "Direct &amp; other traffic";
-    private const string EtsyAppAndOtherEtsyPagesText = "Etsy app &amp; other Etsy pages";
+    private const string DirectAndOtherTrafficText = "Direct & other traffic";
+    private const string EtsyAppAndOtherEtsyPagesText = "Etsy app & other Etsy pages";
     private const string EtsyAdsText = "Etsy Ads";
-    private const string EtsyMarketingAndSeoText = "Etsy marketing &amp; SEO";
+    private const string EtsyMarketingAndSeoText = "Etsy marketing & SEO";
     private const string SocialMediaText = "Social media";
     private const string EtsySearchText = "Etsy search";
     private const string NextPage = "Next page";
@@ -24,8 +24,8 @@ public static class ListingStatsPageXPaths
     public const string SearchTermsTable = "//table[contains(@id,'horizontal-chart')]";
     public const string SearchTermRow = "//tr[not(contains(@class, 'column-header'))]";
     public const string SearchTermCell = "td/div/div[1]/div[1]/span[1]";
-    public const string TotalVisitsCell = "td/div/div[1]/div[2]/div[3]";
-    public const string VisitsCell = "td/div/div[1]/div[2]";
+    // Sometimes it's three columns (Etsy, Google, Total visits) in search terms, sometimes one (Visits)
+    public const string TotalVisitsCell = "td/div/div[1]/div[2]/div[3] | td/div/div[1]/div[2]";
     public const string SearchTermAnyCellFullXPath = $"{SearchTermsTable}{SearchTermRow}/{SearchTermCell}";
     public const string SearchTermsNextButton = $"{SearchTermsTable}/../..//button[@title='{NextPage}']";
 

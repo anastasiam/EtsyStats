@@ -26,12 +26,12 @@ public class WebScrapingService
         return await ClickAndWaitForElementTextToChange(nextButtonXPath, tableCellXPath);
     }
 
-    public async Task<string?> NavigateAndLoadHtmlFromUrl(string url, string elementToLoadXPath, string? errorElementXPath = null)
+    public async Task<bool> NavigateAndLoadHtmlFromUrl(string url, string elementToLoadXPath, string? errorElementXPath = null)
     {
         await _chromeDriver.NavigateToUrlWithDelay(url);
-        var loaded = WaitForElementToLoad(elementToLoadXPath, errorElementXPath);
+        var pageLoadedSuccessfully = WaitForElementToLoad(elementToLoadXPath, errorElementXPath);
 
-        return loaded ? _chromeDriver.PageSource : null;
+        return pageLoadedSuccessfully;
     }
 
     private async Task<bool> ClickAndWaitForElementTextToChange(string buttonXpath, string elementXPath)
@@ -60,7 +60,6 @@ public class WebScrapingService
             return errorElementXPath is not null && c.FindElement(By.XPath(errorElementXPath)) != null;
         });
 
-        // TODO optimize - compare with HtmlDocument speed
         return result && _chromeDriver.FindElements(By.XPath(elementToLoadXPath)).Count > 0;
     }
 }
