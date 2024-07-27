@@ -14,7 +14,7 @@ namespace EtsyStats.Services;
 
 public class EtsyParser
 {
-    private const string UserDataDirectory = "Google/Chrome/User Data";
+    private const string UserDataDirectory = @"Google\Chrome\User Data";
     private const string UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36";
     private const string CategorySeparator = " / ";
     
@@ -216,7 +216,7 @@ public class EtsyParser
 
     private ChromeOptions ChromeOptions(string chromeLocation)
     {
-        var userDataDirectory = $"{Environment.SpecialFolder.LocalApplicationData}/{UserDataDirectory}";
+        var userDataDirectory = $@"{Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)}\{UserDataDirectory}";
 
         var options = new ChromeOptions
         {
