@@ -1,5 +1,6 @@
 // See https://aka.ms/new-console-template for more information
 
+using System.Diagnostics;
 using System.Globalization;
 using EtsyStats.Models;
 using EtsyStats.Models.Options;
@@ -58,9 +59,10 @@ Console.WriteLine("You should not see this");
             {
                 try
                 {
-                    await ProgramHelper.OriginalOut.WriteLineAsync("\nPlease select an action that you would like to do:" +
-                                                                   "\n1 - Upload listings stats" +
-                                                                   "\n2 - Upload search analytics");
+                    await ProgramHelper.OriginalOut.WriteLineAsync(
+                        "\nPlease select an action that you would like to do:" +
+                        "\n1 - Upload listings stats" +
+                        "\n2 - Upload search analytics");
                     // "\n0 - Exit the program");
                     var command = Console.ReadLine();
                     switch (command)
@@ -105,6 +107,24 @@ Console.WriteLine("You should not see this");
                             break;
                     }
                 }
+                catch (InvalidOperationException e)
+                {
+                    if (e.Message.Contains("This version of ChromeDriver only supports Chrome version"))
+                    {
+                        var chromeVersion = FileVersionInfo.GetVersionInfo(googleChromeOptions.ChromeLocation!)
+                            .FileVersion;
+                        await Log.InfoAndConsole(
+                            $"The version of Google Chrome ({chromeVersion}) is different from the version of EtsyStats.\n\r" +
+                            $"Please download corresponding version of EtsyStats: etsy-stats.[last-version]-chrome.{chromeVersion}_new");
+                    }
+                    else
+                    {
+                        await ProgramHelper.OriginalOut.WriteLineAsync("\nSomething went wrong. Unexpected error has occured :(\n\n");
+                        await Log.Debug("See logs/logs.txt.");
+                    }
+
+                    await Log.Error(e.GetBaseException().ToString());
+                }
                 catch (Exception e)
                 {
                     await ProgramHelper.OriginalOut.WriteLineAsync("\nSomething went wrong. Unexpected error has occured :(\n\n");
@@ -119,6 +139,8 @@ Console.WriteLine("You should not see this");
             await Log.Debug("See logs/logs.txt.");
             await Log.Error(e.GetBaseException().ToString());
         }
+
+        Console.ReadLine();
     }
 
     private static Config FirstTimeLaunchConfigure(ApplicationOptions applicationOptions)
