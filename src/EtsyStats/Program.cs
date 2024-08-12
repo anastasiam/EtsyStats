@@ -54,7 +54,7 @@ Console.WriteLine("You should not see this");
             await ProgramHelper.OriginalOut.WriteLineAsync($"Shop: {config.ShopName}");
 
             var etsyDataUploadService = new EtsyDataUploadService(config);
-            var etsyParser = new EtsyParser(googleChromeOptions, config);
+            var etsyParser = new EtsyParser(config, googleChromeOptions);
             do
             {
                 try

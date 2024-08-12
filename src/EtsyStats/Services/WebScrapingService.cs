@@ -5,7 +5,7 @@ using Selenium.Extensions;
 
 namespace EtsyStats.Services;
 
-public class WebScrapingService
+public class WebScrapingService : IDisposable
 {
     private readonly SlDriver _chromeDriver;
 
@@ -61,5 +61,10 @@ public class WebScrapingService
         });
 
         return result && _chromeDriver.FindElements(By.XPath(elementToLoadXPath)).Count > 0;
+    }
+
+    public void Dispose()
+    {
+        _chromeDriver.Dispose();
     }
 }
