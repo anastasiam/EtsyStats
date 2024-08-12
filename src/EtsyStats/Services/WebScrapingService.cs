@@ -34,6 +34,14 @@ public class WebScrapingService : IDisposable
         return pageLoadedSuccessfully;
     }
 
+    public T HandleStaleElements<T>(Func<T> func)
+    {
+        WebDriverWait wait = new WebDriverWait(_chromeDriver, TimeSpan.FromSeconds(Settings.WaitDelayInSeconds));
+        wait.IgnoreExceptionTypes(typeof(StaleElementReferenceException));
+
+        return wait.Until(d => func());
+    }
+
     private async Task<bool> ClickAndWaitForElementTextToChange(string buttonXpath, string elementXPath)
     {
         var initialText = _chromeDriver.FindElement(By.XPath(elementXPath)).Text;
@@ -53,9 +61,11 @@ public class WebScrapingService : IDisposable
     private bool WaitForElementToLoad(string elementToLoadXPath, string? errorElementXPath = null)
     {
         var wait = new WebDriverWait(_chromeDriver, TimeSpan.FromSeconds(Settings.WaitDelayInSeconds));
+        
         var result = wait.Until(c =>
         {
-            if (c.FindElements(By.XPath(elementToLoadXPath)).Count > 0) return true;
+            var el = c.FindElements(By.XPath(elementToLoadXPath));
+            if (el.Count > 0 && el.All(e => e.Displayed && e.Enabled)) return true;
 
             return errorElementXPath is not null && c.FindElement(By.XPath(errorElementXPath)) != null;
         });
