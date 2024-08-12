@@ -98,14 +98,17 @@ public class EtsyParser
     private async Task<List<ListingStats>> GetListingsFromPage(SlDriver chromeDriver, WebScrapingService webScrapingService, DateRange dateRange)
     {
         // TODO use API to get listings?
-        var listingLinksElements = chromeDriver.FindElements(By.XPath(ListingsPageXPaths.ListingLink));
-        var listingsIds = listingLinksElements.Select(e => EtsyUrl.GetListingIdFromLink(e.GetAttribute(Href))).ToList();
-
+        var listingsIds = webScrapingService.HandleStaleElements(() =>
+        {
+            var listingLinksElements = chromeDriver.FindElements(By.XPath(ListingsPageXPaths.ListingLink));
+            return listingLinksElements.Select(e => EtsyUrl.GetListingIdFromLink(e.GetAttribute(Href))).ToList();
+        });
+        
         List<ListingStats> listings = new();
         for (var i = 0; i < listingsIds.Count; i++)
         {
             var id = listingsIds[i];
-            await ProgramHelper.OriginalOut.WriteLineAsync($"\nProcessing listing {i + 1} out of  {listingLinksElements.Count}...\n");
+            await ProgramHelper.OriginalOut.WriteLineAsync($"\nProcessing listing {i + 1} out of  {listingsIds.Count}...\n");
 
             var listing = new ListingStats
             {

@@ -7,6 +7,7 @@ using EtsyStats.Models.Options;
 using EtsyStats.Services;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
+using OpenQA.Selenium;
 
 namespace EtsyStats;
 
@@ -123,20 +124,23 @@ Console.WriteLine("You should not see this");
                         await Log.Debug("See logs/logs.txt.");
                     }
 
-                    await Log.Error(e.GetBaseException().ToString());
+                    await Log.Error("Invalid Operation Exception\r\n" + e.GetBaseException());
+                }
+                catch (StaleElementReferenceException e)
+                {
+                    await ProgramHelper.OriginalOut.WriteLineAsync("\nThere was an error trying to load listing(s). Please try again.\n\n");
+                    await Log.Error("Stale Element Reference Exception\r\n" + e.GetBaseException());
                 }
                 catch (Exception e)
                 {
                     await ProgramHelper.OriginalOut.WriteLineAsync("\nSomething went wrong. Unexpected error has occured :(\n\n");
-                    await Log.Debug("See logs/logs.txt.");
-                    await Log.Error(e.GetBaseException().ToString());
+                    await Log.Error("Unexpected Exception\r\n" + e.GetBaseException());
                 }
             } while (!exit);
         }
         catch (Exception e)
         {
             await ProgramHelper.OriginalOut.WriteLineAsync("\nSomething went wrong. Unexpected error has occured :(\n\n");
-            await Log.Debug("See logs/logs.txt.");
             await Log.Error(e.GetBaseException().ToString());
         }
 
