@@ -3,18 +3,18 @@ using EtsyStats.Extensions;
 using EtsyStats.Helpers;
 using EtsyStats.Models;
 using EtsyStats.Models.Enums;
-using EtsyStats.Models.Options;
 using OpenQA.Selenium;
-using OpenQA.Selenium.Chrome;
 using OpenQA.Selenium.Support.UI;
 using Selenium.Extensions;
 using Selenium.WebDriver.UndetectedChromeDriver;
+using Sl.Selenium.Extensions.Chrome;
 
 namespace EtsyStats.Services;
 
 public class EtsyParser
 {
-    private const string UserDataDirectory = "Google/Chrome/User Data";
+    private const string UserDataDirectory = @"Google\Chrome\User Data";
+    private const string LocalUserDataDir = "Chrome_User_Data";
     private const string UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36";
     private const string CategorySeparator = " / ";
 
@@ -22,18 +22,16 @@ public class EtsyParser
     private const string Src = "src";
     private const string InnerText = "innerText";
     
-    private readonly Config _config;
-    private readonly GoogleChromeOptions _googleChromeOptions;
+    private readonly DirectoryHelper _directoryHelper;
 
-    public EtsyParser(Config config, GoogleChromeOptions googleChromeOptions)
+    public EtsyParser(DirectoryHelper directoryHelper)
     {
-        _config = config;
-        _googleChromeOptions = googleChromeOptions;
+        _directoryHelper = directoryHelper;
     }
 
     public async Task<List<ListingStats>> GetListingsStats(DateRange dateRange)
     {
-        using var chromeDriver = GetUndetectableChromeDriver(_googleChromeOptions.ChromeLocation);
+        using var chromeDriver = GetUndetectedChromeDriver();
         using var webScrapingService = new WebScrapingService(chromeDriver);
         
         List<ListingStats> listings = new();
@@ -55,7 +53,7 @@ public class EtsyParser
 
     public async Task<List<SearchQueryAnalytics>> GetSearchAnalytics(DateRange dateRange)
     {
-        using var chromeDriver = GetUndetectableChromeDriver(_googleChromeOptions.ChromeLocation);
+        using var chromeDriver = GetUndetectedChromeDriver();
         using var webScrapingService = new WebScrapingService(chromeDriver);
         
         var url = EtsyUrl.SearchAnalytics(dateRange);
@@ -83,7 +81,7 @@ public class EtsyParser
             }
             catch (Exception e)
             {
-                await Log.Error($"Exception on parsing analytics on page {page}.\r\n{e.GetBaseException()}");
+                await Log.Error($"Exception on parsing analytics on page {page}.\r\n{e}");
                 await ProgramHelper.OriginalOut.WriteLineAsync($"An error occured on parsing analytics on page {page}.");
                 await File.AppendAllTextAsync($"logs/last_search_analytics_page_{page}.html", chromeDriver.PageSource);
                 throw;
@@ -123,7 +121,7 @@ public class EtsyParser
             catch (Exception e)
             {
                 await ProgramHelper.OriginalOut.WriteLineAsync($"\nAn error occured while parsing listing {id}.");
-                await Log.Error($"Exception on parsing stats for listing {id}.\r\n{e.GetBaseException()}");
+                await Log.Error($"Exception on parsing stats for listing {id}.\r\n{e}");
                 await File.AppendAllTextAsync($"logs/last_stats_id_{id}.html", chromeDriver.PageSource);
                 throw;
             }
@@ -213,28 +211,36 @@ public class EtsyParser
         }
     }
 
-    private SlDriver GetUndetectableChromeDriver(string chromeLocation)
+    private SlDriver GetUndetectedChromeDriver()
     {
-        var options = ChromeOptions(chromeLocation);
+        var localUserDataDir = CopyChromeUserDataDirectory();
 
-        return UndetectedChromeDriver.Instance(_config.ChromeProfile, options);
-    }
-
-    private ChromeOptions ChromeOptions(string chromeLocation)
-    {
-        var userDataDirectory = $"{Environment.SpecialFolder.LocalApplicationData}/{UserDataDirectory}";
-
-        var options = new ChromeOptions
+        var chromeDriversParameters = new ChromeDriverParameters
         {
-            BinaryLocation = chromeLocation
+            DriverArguments = new HashSet<string>()
         };
 
-        options.AddArguments("headless");
-        options.AddArguments($"--user-agent={UserAgent}");
+        chromeDriversParameters.DriverArguments.Add($"--user-agent={UserAgent}");
+        chromeDriversParameters.DriverArguments.Add($"--user-data-dir={localUserDataDir}");
 
-        options.AddArguments($"--profile-directory={_config.ChromeProfile}");
-        options.AddArguments($"--user-data-dir={userDataDirectory}");
-
-        return options;
+        return UndetectedChromeDriver.Instance(chromeDriversParameters);
     }
+
+    private string CopyChromeUserDataDirectory()
+    {
+        var localUserDataDirFullName = new DirectoryInfo(LocalUserDataDir).FullName;
+
+        if (Directory.Exists(localUserDataDirFullName))
+        {
+            Directory.Delete(localUserDataDirFullName, true);
+        }
+
+        var userDataDir =
+            $"{Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)}/{UserDataDirectory}";
+
+        _directoryHelper.CopyAll(userDataDir, localUserDataDirFullName);
+
+        return localUserDataDirFullName;
+    }
+
 }

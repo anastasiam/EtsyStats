@@ -2,6 +2,7 @@
 
 using System.Diagnostics;
 using System.Globalization;
+using EtsyStats.Helpers;
 using EtsyStats.Models;
 using EtsyStats.Models.Options;
 using EtsyStats.Services;
@@ -55,7 +56,8 @@ Console.WriteLine("You should not see this");
             await ProgramHelper.OriginalOut.WriteLineAsync($"Shop: {config.ShopName}");
 
             var etsyDataUploadService = new EtsyDataUploadService(config);
-            var etsyParser = new EtsyParser(config, googleChromeOptions);
+            var directoryHelper = new DirectoryHelper(); // TODO ann DI
+            var etsyParser = new EtsyParser(directoryHelper);
             do
             {
                 try
@@ -124,24 +126,24 @@ Console.WriteLine("You should not see this");
                         await Log.Debug("See logs/logs.txt.");
                     }
 
-                    await Log.Error("Invalid Operation Exception\r\n" + e.GetBaseException());
+                    await Log.Error($"Invalid Operation Exception\r\n{e}");
                 }
                 catch (StaleElementReferenceException e)
                 {
                     await ProgramHelper.OriginalOut.WriteLineAsync("\nThere was an error trying to load listing(s). Please try again.\n\n");
-                    await Log.Error("Stale Element Reference Exception\r\n" + e.GetBaseException());
+                    await Log.Error($"Stale Element Reference Exception\r\n{e}");
                 }
                 catch (Exception e)
                 {
                     await ProgramHelper.OriginalOut.WriteLineAsync("\nSomething went wrong. Unexpected error has occured :(\n\n");
-                    await Log.Error("Unexpected Exception\r\n" + e.GetBaseException());
+                    await Log.Error($"Unexpected Exception\r\n{e}");
                 }
             } while (!exit);
         }
         catch (Exception e)
         {
             await ProgramHelper.OriginalOut.WriteLineAsync("\nSomething went wrong. Unexpected error has occured :(\n\n");
-            await Log.Error(e.GetBaseException().ToString());
+            await Log.Error(e.ToString());
         }
 
         Console.ReadLine();
