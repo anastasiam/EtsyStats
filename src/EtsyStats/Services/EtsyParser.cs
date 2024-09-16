@@ -222,7 +222,9 @@ public class EtsyParser
 
         chromeDriversParameters.DriverArguments.Add($"--user-agent={UserAgent}");
         chromeDriversParameters.DriverArguments.Add($"--user-data-dir={localUserDataDir}");
-
+        chromeDriversParameters.DriverArguments.Add("--no-sandbox");
+        chromeDriversParameters.DriverArguments.Add("--profile-directory=Default");
+        
         return UndetectedChromeDriver.Instance(chromeDriversParameters);
     }
 
