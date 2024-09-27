@@ -11,58 +11,63 @@ public class ListingStats
     
     public string? TitlePhotoUrl { get; set; }
 
-    [SheetColumn("Title Photo", Order = 1)]
+    [SheetColumn("Title Photo", Order = 10)]
     public string? TitlePhoto => GoogleSheetsFormula.GetImageFromUrl(TitlePhotoUrl);
 
-    [SheetColumn("Link", Order = 2)] public string? Link { get; set; }
+    [SheetColumn("Link", Order = 20)] public string? Link { get; set; }
 
-    [SheetColumn("Visits", Order = 3)]
+    [SheetColumn("Listed date", Order = 21)]
+    public string? ListedDate { get; set; }
+
+    [SheetColumn("SKU", Order = 22)] public string? Sku { get; set; }
+
+    [SheetColumn("Visits", Order = 30)]
     public decimal Visits { get; set; }
 
-    [SheetColumn("Total Views", Order = 4)]
+    [SheetColumn("Total Views", Order = 40)]
     public decimal TotalViews { get; set; }
 
-    [SheetColumn("Orders", Order = 5)]
+    [SheetColumn("Orders", Order = 50)]
     public decimal Orders { get; set; }
 
-    [SheetColumn("Revenue", Order = 6)]
+    [SheetColumn("Revenue", Order = 60)]
     public decimal Revenue { get; set; }
 
-    [SheetColumn("Conversion Rate", Order = 7)]
+    [SheetColumn("Conversion Rate", Order = 70)]
     public decimal ConversionRate => Visits == 0 ? 0 : Math.Round(Orders / Visits * 100, 2);
 
-    [SheetColumn("Click Rate", Order = 8)]
+    [SheetColumn("Click Rate", Order = 80)]
     public decimal ClickRate => TotalViews == 0 ? 0 : Math.Round(Visits / TotalViews * 100, 2);
 
-    [SheetColumn("Direct & other traffic", Order = 9)]
+    [SheetColumn("Direct & other traffic", Order = 90)]
     public string? DirectAndOtherTraffic { get; set; }
 
-    [SheetColumn("Etsy app & other Etsy pages", Order = 10)]
+    [SheetColumn("Etsy app & other Etsy pages", Order = 100)]
     public string? EtsyAppAndOtherEtsyPages { get; set; }
 
-    [SheetColumn("Etsy ads", Order = 11)] public string? EtsyAds { get; set; }
+    [SheetColumn("Etsy ads", Order = 110)] public string? EtsyAds { get; set; }
 
-    [SheetColumn("Etsy marketing & SEO", Order = 12)]
+    [SheetColumn("Etsy marketing & SEO", Order = 120)]
     public string? EtsyMarketingAndSeo { get; set; }
 
-    [SheetColumn("Social media", Order = 13)]
+    [SheetColumn("Social media", Order = 130)]
     public string? SocialMedia { get; set; }
 
-    [SheetColumn("Etsy search", Order = 14)]
+    [SheetColumn("Etsy search", Order = 140)]
     public string? EtsySearch { get; set; }
 
-    [SheetColumn("Title", Order = 15)] public string? Title { get; set; }
+    [SheetColumn("Title", Order = 150)] public string? Title { get; set; }
 
-    public List<SearchTerm>? SearchTerms { get; set; } 
+    public List<SearchTerm>? SearchTerms { get; set; }
 
-    [SheetColumn("Search terms", Order = 16)]
+    [SheetColumn("Search terms", Order = 160)]
     public string? SearchTermsFormatted => SearchTerms is not null ? string.Join(ListSeparator, SearchTerms.Select(searchTerm => $"{searchTerm.Name}: {searchTerm.TotalVisits}")) : null;
 
     public List<string>? Tags { get; set; }
 
-    [SheetColumn("Tags", Order = 17)] public string? TagsFormatted => Tags is not null ? string.Join(ListSeparator, Tags) : null;
+    [SheetColumn("Tags", Order = 170)] public string? TagsFormatted => Tags is not null ? string.Join(ListSeparator, Tags) : null;
 
-    [SheetColumn("Working Tags", Order = 18)]
+    [SheetColumn("Working Tags", Order = 180)]
     public string? WorkingTagsFormatted
     {
         get
@@ -73,7 +78,7 @@ public class ListingStats
         }
     }
 
-    [SheetColumn("Non-working Tags", Order = 19)]
+    [SheetColumn("Non-working Tags", Order = 190)]
     public string? NonWorkingTags
     {
         get
@@ -86,8 +91,8 @@ public class ListingStats
 
     private IEnumerable<string?>? SearchTermsWords => SearchTerms?.SelectMany(st => st.Name?.Split(WordsSeparator, StringSplitOptions.RemoveEmptyEntries) ?? Array.Empty<string>());
     private IEnumerable<string>? TitleWords => Title?.ReplaceSpecialCharacters(WordsSeparator).Split(WordsSeparator, StringSplitOptions.RemoveEmptyEntries);
-    
-    [SheetColumn("Working Title Words", Order = 20)]
+
+    [SheetColumn("Working Title Words", Order = 200)]
     public string? WorkingTitleWords
     {
         get
@@ -98,7 +103,7 @@ public class ListingStats
         }
     }
 
-    [SheetColumn("Non-working Title Words", Order = 21)]
+    [SheetColumn("Non-working Title Words", Order = 210)]
     public string? NonWorkingTitleWords
     {
         get
@@ -109,7 +114,7 @@ public class ListingStats
         }
     }
 
-    [SheetColumn("Tagging ideas (Tags)", Order = 22)]
+    [SheetColumn("Tagging ideas (Tags)", Order = 220)]
     public string? TaggingIdeasTags
     {
         get
@@ -120,7 +125,7 @@ public class ListingStats
         }
     }
 
-    [SheetColumn("Tagging ideas (Title)", Order = 23)]
+    [SheetColumn("Tagging ideas (Title)", Order = 230)]
     public string? TaggingIdeasTitle
     {
         get
@@ -131,8 +136,11 @@ public class ListingStats
         }
     }
 
-    [SheetColumn("Category", Order = 24)] public string? Category { get; set; }
+    [SheetColumn("Category", Order = 240)] public string? Category { get; set; }
 
-    [SheetColumn("Shop section", Order = 25)]
+    [SheetColumn("Shop section", Order = 250)]
     public string? ShopSection { get; set; }
+
+    [SheetColumn("Shipping profile", Order = 251)]
+    public string? ShippingProfile { get; set; }
 }

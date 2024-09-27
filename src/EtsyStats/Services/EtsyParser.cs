@@ -21,6 +21,7 @@ public class EtsyParser
     private const string Href = "href";
     private const string Src = "src";
     private const string InnerText = "innerText";
+    private const string Value = "value";
     
     private readonly DirectoryHelper _directoryHelper;
 
@@ -156,6 +157,9 @@ public class EtsyParser
         var tags = chromeDriver.FindElements(By.XPath(ListingEditPageXPaths.Tag));
         var categories = chromeDriver.FindElements(By.XPath(ListingEditPageXPaths.Category));
         var shopSectionSelector = new SelectElement(chromeDriver.FindElement(By.XPath(ListingEditPageXPaths.ShopSection)));
+        var listedDate = chromeDriver.FindElements(By.XPath(ListingEditPageXPaths.ListedDate));
+        var sku = chromeDriver.FindElements(By.XPath(ListingEditPageXPaths.Sku));
+        var shippingProfile = chromeDriver.FindElements(By.XPath(ListingEditPageXPaths.ShippingProfile));
 
         if (tags is not null)
             listing.Tags = tags.Select(t => t.GetAttribute(InnerText).Trim()).ToList();
@@ -163,6 +167,15 @@ public class EtsyParser
         if (categories is not null)
             listing.Category = string.Join(CategorySeparator, categories.Select(c => c.GetAttribute(InnerText).Trim()));
 
+        if (listedDate is not null)
+            listing.ListedDate = listedDate.FirstOrDefault()?.GetAttribute(InnerText).Trim().ExtractDate();
+
+        if (sku is not null)
+            listing.Sku = sku.FirstOrDefault()?.GetAttribute(Value).Trim();
+
+        if (shippingProfile is not null)
+            listing.ShippingProfile = shippingProfile.FirstOrDefault()?.GetAttribute(InnerText).Trim();
+        
         listing.ShopSection = shopSectionSelector.SelectedOption.GetAttribute(InnerText);
     }
 
