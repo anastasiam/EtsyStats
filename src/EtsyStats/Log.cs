@@ -12,7 +12,7 @@ public static class Log
     public static async Task InfoAndConsole(string message)
     {
         await Info(message);
-        await ProgramHelper.OriginalOut.WriteLineAsync($"\n{message}");
+        Console.WriteLine($"\n{message}");
     }
 
     public static async Task Info(string message)
@@ -23,7 +23,7 @@ public static class Log
     public static async Task Debug(string message)
     {
 #if DEBUG
-        await ProgramHelper.OriginalOut.WriteLineAsync($"\n{message}");
+        Console.WriteLine($"\n{message}");
 #endif
     }
 }

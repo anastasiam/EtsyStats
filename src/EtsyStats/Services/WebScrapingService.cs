@@ -36,10 +36,10 @@ public class WebScrapingService : IDisposable
 
     public T HandleStaleElements<T>(Func<T> func)
     {
-        WebDriverWait wait = new WebDriverWait(_chromeDriver, TimeSpan.FromSeconds(Settings.WaitDelayInSeconds));
+        var wait = new WebDriverWait(_chromeDriver, TimeSpan.FromSeconds(Settings.WaitDelayInSeconds));
         wait.IgnoreExceptionTypes(typeof(StaleElementReferenceException));
 
-        return wait.Until(d => func());
+        return wait.Until(_ => func());
     }
 
     private async Task<bool> ClickAndWaitForElementTextToChange(string buttonXpath, string elementXPath)
@@ -76,5 +76,6 @@ public class WebScrapingService : IDisposable
     public void Dispose()
     {
         _chromeDriver.Dispose();
+        GC.SuppressFinalize(_chromeDriver);
     }
 }
