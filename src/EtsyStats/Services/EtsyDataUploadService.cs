@@ -1,64 +1,65 @@
 using EtsyStats.Models;
-using Google;
+using Newtonsoft.Json;
 
 namespace EtsyStats.Services;
 
 public class EtsyDataUploadService
 {
-    private const string StatsTab = $"{ShopPlaceholder} - Stats";
-    private const string SearchAnalyticsTab = $"{ShopPlaceholder} - Analytics";
-
-    private const string ShopPlaceholder = "{shop}";
-
     private readonly GoogleSheetService _googleSheetService;
-    private readonly Config _config;
+    private readonly UserConfiguration _userConfiguration;
 
-    public EtsyDataUploadService(Config config)
+    public EtsyDataUploadService(UserConfiguration userConfiguration,
+        GoogleSheetService googleSheetService)
     {
-        _config = config;
-        _googleSheetService = new GoogleSheetService();
+        _userConfiguration = userConfiguration;
+        _googleSheetService = googleSheetService;
     }
 
     /// <summary>
-    /// Writes data to "{shopName} - Stats" tab. Creates tab if doesn't exist.
+    /// Writes listing stats to "{UserConfiguration.ShopName} - Stats" tab of the sheet <paramref name="spreadsheetId"/> and creates tab if it doesn't exist.
     /// </summary>
-    /// <param name="sheetId">Google Sheet identifier</param>
+    /// <param name="spreadsheetId">Google Sheet identifier</param>
     /// <param name="listings">List of listings</param>
-    public async Task WriteListingsStatsToGoogleSheet(string sheetId, List<ListingStats> listings)
+    /// <exception cref="ArgumentNullException"></exception>
+    public async Task WriteListingsStatisticsToGoogleSheet(string spreadsheetId, IList<ListingStatistic> listings)
     {
-        await Log.Info($"WriteListingsStatsToGoogleSheet sheetId: {(string.IsNullOrWhiteSpace(sheetId) ? "is NULL" : "is NOT NULL")}");
-        var tabName = StatsTab.Replace(ShopPlaceholder, _config.ShopName);
-        try
+        var tabName = $"{_userConfiguration.ShopName} - Stats";
+
+        if (listings is null)
         {
-            await _googleSheetService.WriteDataToSheet(sheetId, tabName, listings);
+            throw new ArgumentNullException(nameof(listings));
         }
-        catch (GoogleApiException)
-        {
-            // TODO Create new Tab without exception
-            await _googleSheetService.CreateTab(sheetId, tabName);
-            await _googleSheetService.WriteDataToSheet(sheetId, tabName, listings);
-        }
+
+        if (!_googleSheetService.SheetExists(spreadsheetId, tabName))
+            await _googleSheetService.CreateTab(spreadsheetId, tabName);
+
+        await _googleSheetService.WriteDataToSheet(spreadsheetId, tabName, listings);
     }
 
     /// <summary>
-    /// Writes data to "{shopName} - Analytics" tab. Creates tab if doesn't exist.
+    /// Writes statistic summary to "{UserConfiguration.ShopName} - Summary" tab of the sheet <paramref name="spreadsheetId"/> and creates tab if it doesn't exist.
     /// </summary>
-    /// <param name="sheetId">Google Sheet identifier</param>
-    /// <param name="searchAnalytics">List of analytics per search query</param>
-    public async Task WriteSearchAnalyticsToGoogleSheet(string sheetId, List<SearchQueryAnalytics> searchAnalytics)
+    /// <param name="spreadsheetId">Google Sheet identifier</param>
+    /// <param name="searchTermsSummary"></param>
+    /// <param name="tagsSummary"></param>
+    /// <exception cref="ArgumentNullException"></exception>
+    public async Task WriteStatisticSummaryToGoogleSheet(string spreadsheetId, IList<SearchTerm> searchTermsSummary, IList<TagUsage> tagsSummary)
     {
-        var tabName = SearchAnalyticsTab.Replace(ShopPlaceholder, _config.ShopName);
+        var tabName = $"{_userConfiguration.ShopName} - Summary";
 
-        try
-        {
-            await _googleSheetService.WriteDataToSheet(sheetId, tabName, searchAnalytics);
-        }
-        catch (GoogleApiException)
-        {
+        if (searchTermsSummary is null) throw new ArgumentNullException(nameof(searchTermsSummary));
 
-            // TODO Create new Tab without exception
-            await _googleSheetService.CreateTab(sheetId, tabName);
-            await _googleSheetService.WriteDataToSheet(sheetId, tabName, searchAnalytics);
-        }
+        if (tagsSummary is null) throw new ArgumentNullException(nameof(tagsSummary));
+
+        if (!_googleSheetService.SheetExists(spreadsheetId, tabName))
+            await _googleSheetService.CreateTab(spreadsheetId, tabName);
+
+        await Log.InfoAsync($"Writing SearchTermsSummary: {JsonConvert.SerializeObject(searchTermsSummary)}");
+        var (updatedSearchTermsColumns, _) = await _googleSheetService.WriteDataToSheet(spreadsheetId, tabName, searchTermsSummary);
+
+        // TODO: this to separate tab
+        await Log.InfoAsync($"Appending TagsSummary: {JsonConvert.SerializeObject(tagsSummary)}");
+        var firstColumnIndex = updatedSearchTermsColumns + 1; // +1 - for empty column and border column
+        await _googleSheetService.AppendDataToSheet(spreadsheetId, tabName, tagsSummary, firstColumnIndex);
     }
 }

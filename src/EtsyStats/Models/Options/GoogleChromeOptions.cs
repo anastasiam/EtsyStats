@@ -4,5 +4,5 @@ public class GoogleChromeOptions
 {
     public const string SectionName = "GoogleChrome";
 
-    public string ChromeLocation { get; set; }
+    public string? ChromeLocation { get; set; }
 }

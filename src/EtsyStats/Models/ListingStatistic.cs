@@ -4,22 +4,24 @@ using EtsyStats.Helpers;
 
 namespace EtsyStats.Models;
 
-public class ListingStats
+public class ListingStatistic
 {
     private const string ListSeparator = ", ";
     private const string WordsSeparator = " ";
-    
+
     public string? TitlePhotoUrl { get; set; }
 
     [SheetColumn("Title Photo", Order = 10)]
     public string? TitlePhoto => GoogleSheetsFormula.GetImageFromUrl(TitlePhotoUrl);
 
-    [SheetColumn("Link", Order = 20)] public string? Link { get; set; }
+    [SheetColumn("Link", Order = 20)]
+    public string? Link { get; set; }
 
     [SheetColumn("Listed date", Order = 21)]
     public string? ListedDate { get; set; }
 
-    [SheetColumn("SKU", Order = 22)] public string? Sku { get; set; }
+    [SheetColumn("SKU", Order = 22)]
+    public string? Sku { get; set; }
 
     [SheetColumn("Visits", Order = 30)]
     public decimal Visits { get; set; }
@@ -45,7 +47,8 @@ public class ListingStats
     [SheetColumn("Etsy app & other Etsy pages", Order = 100)]
     public string? EtsyAppAndOtherEtsyPages { get; set; }
 
-    [SheetColumn("Etsy ads", Order = 110)] public string? EtsyAds { get; set; }
+    [SheetColumn("Etsy ads", Order = 110)]
+    public string? EtsyAds { get; set; }
 
     [SheetColumn("Etsy marketing & SEO", Order = 120)]
     public string? EtsyMarketingAndSeo { get; set; }
@@ -56,7 +59,8 @@ public class ListingStats
     [SheetColumn("Etsy search", Order = 140)]
     public string? EtsySearch { get; set; }
 
-    [SheetColumn("Title", Order = 150)] public string? Title { get; set; }
+    [SheetColumn("Title", Order = 150)]
+    public string? Title { get; set; }
 
     public List<SearchTerm>? SearchTerms { get; set; }
 
@@ -65,7 +69,8 @@ public class ListingStats
 
     public List<string>? Tags { get; set; }
 
-    [SheetColumn("Tags", Order = 170)] public string? TagsFormatted => Tags is not null ? string.Join(ListSeparator, Tags) : null;
+    [SheetColumn("Tags", Order = 170)]
+    public string? TagsFormatted => Tags is not null ? string.Join(ListSeparator, Tags) : null;
 
     [SheetColumn("Working Tags", Order = 180)]
     public string? WorkingTagsFormatted
@@ -136,11 +141,12 @@ public class ListingStats
         }
     }
 
-    [SheetColumn("Category", Order = 240)] public string? Category { get; set; }
+    [SheetColumn("Category", Order = 240)]
+    public string? Category { get; set; }
 
     [SheetColumn("Shop section", Order = 250)]
     public string? ShopSection { get; set; }
 
-    [SheetColumn("Shipping profile", Order = 251)]
+    [SheetColumn("Shipping profile", Order = 260)]
     public string? ShippingProfile { get; set; }
 }

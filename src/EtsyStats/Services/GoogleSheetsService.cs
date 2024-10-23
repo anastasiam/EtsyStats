@@ -3,6 +3,7 @@ using Google.Apis.Auth.OAuth2;
 using Google.Apis.Services;
 using Google.Apis.Sheets.v4;
 using Google.Apis.Sheets.v4.Data;
+using Newtonsoft.Json;
 
 namespace EtsyStats.Services;
 
@@ -13,9 +14,7 @@ public class GoogleSheetService
     private const string RowsDimension = "ROWS";
     private static readonly string[] Scopes = { SheetsService.Scope.Spreadsheets };
 
-    private readonly SheetsService _sheetsService;
-
-    public GoogleSheetService()
+    private SheetsService InitSheetsService()
     {
         using var stream = new FileStream(GoogleCredentialsFileName, FileMode.Open, FileAccess.Read);
         var serviceInitializer = new BaseClientService.Initializer
@@ -23,52 +22,76 @@ public class GoogleSheetService
             HttpClientInitializer = GoogleCredential.FromStream(stream).CreateScoped(Scopes)
         };
 
-        _sheetsService = new SheetsService(serviceInitializer);
+        return new SheetsService(serviceInitializer);
     }
 
-    public async Task WriteDataToSheet<T>(string sheetId, string tabName, List<T> data)
+    public async Task<(int updatedColumns, int updatedRows)> WriteDataToSheet<T>(string spreadsheetId, string tabName, IList<T> data, int firstColumnIndex = 0)
     {
-        var valuesResource = _sheetsService.Spreadsheets.Values;
+        using var sheetsService = InitSheetsService();
+        var valuesResource = sheetsService.Spreadsheets.Values;
 
-        await Log.Info($"WriteDataToSheet sheetId: {(string.IsNullOrWhiteSpace(sheetId) ? "is NULL" : "is NOT NULL")}");
-        var clear = valuesResource.Clear(new ClearValuesRequest(), sheetId, GetAllRange(tabName));
+        await Log.InfoAsync("Clearing data from sheet");
+        var clear = valuesResource.Clear(new ClearValuesRequest(), spreadsheetId, GetAllRange(tabName));
         await clear.ExecuteAsync();
 
-        var properties = typeof(T).GetProperties()
-            .Select(propertyInfo => new
-            {
-                propertyInfo,
-                sheetColumnAttribute = (SheetColumnAttribute?)propertyInfo.GetCustomAttributes(typeof(SheetColumnAttribute), false).FirstOrDefault()
-            })
-            .Where(p => p.sheetColumnAttribute is not null)
-            .OrderBy(p => p.sheetColumnAttribute!.Order)
-            .ToList();
-
-        // Headers
-        var columns = properties.Select(p => (object)(p.sheetColumnAttribute!.ColumnName ?? p.propertyInfo.Name)).ToList();
-        var valueRange = new ValueRange { Values = new List<IList<object>> { columns }, MajorDimension = RowsDimension };
-
-        // Values
-        foreach (var rowData in data)
-        {
-            var values = properties.Select(p => p.propertyInfo.GetValue(rowData)).ToList();
-            valueRange.Values.Add(values);
-        }
-
-        var range = GetRange(tabName, columns.Count, data.Count + 1); // +1 - for header
-        var update = valuesResource.Update(valueRange, sheetId, range);
-
-        update.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.USERENTERED;
-
-        var response = await update.ExecuteAsync();
-        await Log.InfoAndConsole($"Updated rows:{response.UpdatedRows}");
+        return await AppendDataToSheet(spreadsheetId, tabName, data, firstColumnIndex, sheetsService);
     }
 
-    public async Task CreateTab(string sheetId, string tabName)
+    public async Task<(int updatedColumns, int updatedRows)> AppendDataToSheet<T>(string spreadsheetId, string tabName, IList<T> data, int firstColumnIndex = 0, SheetsService? sheetsService = null)
     {
-        await Log.InfoAndConsole($"Creating a new tab: {tabName}");
-        await Log.Info($"CreateTab sheetId: {(string.IsNullOrWhiteSpace(sheetId) ? "is NULL" : "is NOT NULL")}");
-        
+        await Log.InfoAsync("Appending data to sheet");
+        sheetsService ??= InitSheetsService();
+
+        try
+        {
+            var valuesResource = sheetsService.Spreadsheets.Values;
+
+            var properties = typeof(T).GetProperties()
+                .Select(propertyInfo => new
+                {
+                    propertyInfo,
+                    sheetColumnAttribute = (SheetColumnAttribute?)propertyInfo.GetCustomAttributes(typeof(SheetColumnAttribute), false).FirstOrDefault()
+                })
+                .Where(p => p.sheetColumnAttribute is not null)
+                .OrderBy(p => p.sheetColumnAttribute!.Order)
+                .ToList();
+
+            // Headers
+            var columns = properties.Select(object (p) => p.sheetColumnAttribute!.ColumnName ?? p.propertyInfo.Name).ToList();
+            var valueRange = new ValueRange { Values = new List<IList<object>> { columns }, MajorDimension = RowsDimension };
+
+            // Values
+            foreach (var rowData in data)
+            {
+                var values = properties.Select(p => p.propertyInfo.GetValue(rowData)).ToList();
+                valueRange.Values.Add(values);
+            }
+
+            var range = GetRange(tabName, columns.Count, data.Count + 1, firstColumnIndex); // data.Count + 1 - for header
+
+            await Log.InfoAsync($"Range: {range}");
+
+            var update = valuesResource.Update(valueRange, spreadsheetId, range);
+
+            update.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.USERENTERED;
+
+            var response = await update.ExecuteAsync();
+
+            await Log.InfoAndConsoleAsync($"Updated rows: {response.UpdatedRows}");
+
+            return (updatedColumns: response.UpdatedColumns ?? 0, updatedRows: response.UpdatedRows ?? 0);
+        }
+        finally
+        {
+            sheetsService.Dispose();
+        }
+    }
+
+    public async Task CreateTab(string spreadsheetId, string tabName)
+    {
+        await Log.InfoAndConsoleAsync($"Creating a new tab: {tabName}");
+        using var sheetsService = InitSheetsService();
+
         var request = new BatchUpdateSpreadsheetRequest
         {
             Requests = new List<Request>
@@ -76,17 +99,61 @@ public class GoogleSheetService
                 new() { AddSheet = new AddSheetRequest { Properties = new SheetProperties { Title = tabName, Index = 0 } } }
             }
         };
-        var batchUpdate = _sheetsService.Spreadsheets.BatchUpdate(request, sheetId);
+        var batchUpdate = sheetsService.Spreadsheets.BatchUpdate(request, spreadsheetId);
         await batchUpdate.ExecuteAsync();
 
-        await Log.InfoAndConsole($"Tab {tabName} was creating successfully");
+        await Log.InfoAndConsoleAsync($"Tab {tabName} was creating successfully");
     }
 
-    private string GetRange(string tabName, int columnsCount, int rowsCount)
+    public async Task SortSheetsAscending(string spreadsheetId)
     {
-        var lastColumnName = GetGoogleSheetColumnName(columnsCount);
+        await Log.InfoAsync("Sorting Sheets");
+        using var sheetsService = InitSheetsService();
+        var spreadsheet = await sheetsService.Spreadsheets.Get(spreadsheetId).ExecuteAsync();
 
-        return $"{tabName}!A1:{lastColumnName}{rowsCount + 2}";
+        var sortedSheets = spreadsheet.Sheets.OrderBy(sheet => sheet.Properties.Title).ToList();
+
+        var requests = new List<Request>();
+        for (var i = 0; i < sortedSheets.Count; i++)
+            requests.Add(new Request
+            {
+                UpdateSheetProperties = new UpdateSheetPropertiesRequest
+                {
+                    Properties = new SheetProperties
+                    {
+                        SheetId = sortedSheets[i].Properties.SheetId,
+                        Index = i // New index for the sorted sheet
+                    },
+                    Fields = "index"
+                }
+            });
+
+        var batchUpdateRequest = new BatchUpdateSpreadsheetRequest { Requests = requests };
+        await sheetsService.Spreadsheets.BatchUpdate(batchUpdateRequest, spreadsheetId).ExecuteAsync();
+
+        await Log.InfoAsync("Sheets sorted successfully.");
+    }
+
+    public bool SheetExists(string spreadsheetId, string sheetName)
+    {
+        using var sheetsService = InitSheetsService();
+        var spreadsheet = sheetsService.Spreadsheets.Get(spreadsheetId).Execute();
+        return spreadsheet.Sheets.Any(s => s.Properties.Title == sheetName);
+    }
+
+    private int GetSheetId(SheetsService service, string spreadsheetId, string sheetName)
+    {
+        var spreadsheet = service.Spreadsheets.Get(spreadsheetId).Execute();
+        var sheet = spreadsheet.Sheets.First(s => s.Properties.Title == sheetName);
+        return sheet.Properties.SheetId!.Value;
+    }
+
+    private string GetRange(string tabName, int columnsCount, int rowsCount, int firstColumnIndex = 0)
+    {
+        var firstColumnName = GetGoogleSheetColumnName(firstColumnIndex + 1);
+        var lastColumnName = GetGoogleSheetColumnName(columnsCount + firstColumnIndex);
+
+        return $"{tabName}!{firstColumnName}1:{lastColumnName}{rowsCount + 2}";
     }
 
     private string GetAllRange(string tabName)

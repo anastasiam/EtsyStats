@@ -4,5 +4,5 @@ public class GoogleSheetsOptions
 {
     public const string SectionName = "GoogleSheets";
 
-    public string SheetId { get; set; }
+    public string? SpreadsheetId { get; set; }
 }

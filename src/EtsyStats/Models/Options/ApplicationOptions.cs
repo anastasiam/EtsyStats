@@ -4,6 +4,6 @@ public class ApplicationOptions
 {
     public const string SectionName = "Application";
 
-    public string UserDataDirectory { get; set; }
-    public string ConfigFileName { get; set; }
+    public string? UserDataDirectory { get; set; }
+    public string? ConfigFileName { get; set; }
 }
