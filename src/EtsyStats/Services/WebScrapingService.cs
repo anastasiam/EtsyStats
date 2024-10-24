@@ -1,5 +1,6 @@
-using EtsyStats.Extensions;
+using EtsyStats.Models.Options;
 using OpenQA.Selenium;
+using OpenQA.Selenium.Interactions;
 using OpenQA.Selenium.Support.UI;
 using Selenium.Extensions;
 
@@ -8,10 +9,13 @@ namespace EtsyStats.Services;
 public class WebScrapingService : IDisposable
 {
     private readonly SlDriver _chromeDriver;
+    private readonly ConfigurationOptions _configurationOptions;
 
-    public WebScrapingService(SlDriver chromeDriver)
+    public WebScrapingService(SlDriver chromeDriver,
+        ConfigurationOptions configurationOptions)
     {
         _chromeDriver = chromeDriver;
+        _configurationOptions = configurationOptions;
     }
 
     public async Task<bool> NextPage(string paginationXPath, string tableCellXPath)
@@ -28,7 +32,7 @@ public class WebScrapingService : IDisposable
 
     public async Task<bool> NavigateAndLoadHtmlFromUrl(string url, string elementToLoadXPath, string? errorElementXPath = null)
     {
-        await _chromeDriver.NavigateToUrlWithDelay(url);
+        await NavigateToUrlWithDelay(url);
         var pageLoadedSuccessfully = WaitForElementToLoad(elementToLoadXPath, errorElementXPath);
 
         return pageLoadedSuccessfully;
@@ -36,23 +40,29 @@ public class WebScrapingService : IDisposable
 
     public T HandleStaleElements<T>(Func<T> func)
     {
-        var wait = new WebDriverWait(_chromeDriver, TimeSpan.FromSeconds(Settings.WaitDelayInSeconds));
+        var wait = new WebDriverWait(_chromeDriver, TimeSpan.FromSeconds(_configurationOptions.WaitDelayInSeconds));
         wait.IgnoreExceptionTypes(typeof(StaleElementReferenceException));
 
         return wait.Until(_ => func());
     }
 
+    public void Dispose()
+    {
+        _chromeDriver.Dispose();
+        GC.SuppressFinalize(_chromeDriver);
+    }
+
     private async Task<bool> ClickAndWaitForElementTextToChange(string buttonXpath, string elementXPath)
     {
         var initialText = _chromeDriver.FindElement(By.XPath(elementXPath)).Text;
-        await _chromeDriver.ClickWithDelay(buttonXpath);
+        await ClickWithDelay(buttonXpath);
 
         return WaitForElementTextToChange(elementXPath, initialText);
     }
 
     private bool WaitForElementTextToChange(string elementXPath, string initialText)
     {
-        var wait = new WebDriverWait(_chromeDriver, TimeSpan.FromSeconds(Settings.WaitDelayInSeconds));
+        var wait = new WebDriverWait(_chromeDriver, TimeSpan.FromSeconds(_configurationOptions.WaitDelayInSeconds));
         var textChanged = wait.Until(c => c.FindElement(By.XPath(elementXPath)).Text != initialText);
 
         return textChanged;
@@ -60,7 +70,7 @@ public class WebScrapingService : IDisposable
 
     private bool WaitForElementToLoad(string elementToLoadXPath, string? errorElementXPath = null)
     {
-        var wait = new WebDriverWait(_chromeDriver, TimeSpan.FromSeconds(Settings.WaitDelayInSeconds));
+        var wait = new WebDriverWait(_chromeDriver, TimeSpan.FromSeconds(_configurationOptions.WaitDelayInSeconds));
         
         var result = wait.Until(c =>
         {
@@ -73,9 +83,22 @@ public class WebScrapingService : IDisposable
         return result && _chromeDriver.FindElements(By.XPath(elementToLoadXPath)).Count > 0;
     }
 
-    public void Dispose()
+    private async Task ClickWithDelay(string elementXPath)
     {
-        _chromeDriver.Dispose();
-        GC.SuppressFinalize(_chromeDriver);
+        var actions = new Actions(_chromeDriver);
+        await TaskDelay();
+        actions.MoveToElement(_chromeDriver.FindElement(By.XPath(elementXPath))).Click().Perform();
+    }
+
+    private async Task NavigateToUrlWithDelay(string url)
+    {
+        await TaskDelay();
+        _chromeDriver.Navigate().GoToUrl(url);
+    }
+
+    private async Task TaskDelay()
+    {
+        var milliseconds = new Random().Next(_configurationOptions.MinDelayInMilliseconds, _configurationOptions.MaxDelayInMilliseconds);
+        await Task.Delay(milliseconds);
     }
 }

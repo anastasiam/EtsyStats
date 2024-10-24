@@ -10,6 +10,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="DotNetEnv" Version="3.1.1"/>
       <PackageReference Include="Google.Apis.Sheets.v4" Version="1.67.0.3364" />
       <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
       <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="8.0.1" />
@@ -19,181 +20,10 @@
     </ItemGroup>
 
     <ItemGroup>
-      <None Update="google-sheets-creds.json">
+        <None Update="google-credentials.production.json">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
-      <None Update="google-credentials.json">
-        <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-      </None>
-      <None Update="Test\Listings.html">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="Test\Listings_files\base.80fa731720932b4f544d.js.Без названия">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="Test\Listings_files\ChromeForLegacyPages.7b3af0cef975fff254b1.js.Без названия">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="Test\Listings_files\deferred.0c2c3eb7044ba0819edc.js.Без названия">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="Test\Listings_files\etsy-channel.svg">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="Test\Listings_files\il_340x270.3658253938_kjpp.jpg">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="Test\Listings_files\il_340x270.4368441420_7ep5.jpg">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="Test\Listings_files\il_340x270.4427331652_f1mr.jpg">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="Test\Listings_files\il_340x270.4574650144_3nfw.jpg">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="Test\Listings_files\il_340x270.4924325353_9lor.jpg">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="Test\Listings_files\il_340x270.5029931905_hxyl.jpg">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="Test\Listings_files\il_340x270.5054099801_db6t.jpg">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="Test\Listings_files\il_340x270.5136611225_2agb.jpg">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="Test\Listings_files\il_340x270.5641100063_ivbi.jpg">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="Test\Listings_files\il_340x270.5753264763_hbsg.jpg">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="Test\Listings_files\il_340x270.5755210878_pmf8.jpg">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="Test\Listings_files\il_340x270.5755538890_cm2u.jpg">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="Test\Listings_files\il_340x270.5764031527_jjx1.jpg">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="Test\Listings_files\il_340x270.5777152882_frxw.jpg">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="Test\Listings_files\il_340x270.5777167880_rfwv.jpg">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="Test\Listings_files\il_340x270.5803104547_3ycm.jpg">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="Test\Listings_files\il_340x270.5835846248_2b15.jpg">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="Test\Listings_files\il_340x270.5853567158_719y.jpg">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="Test\Listings_files\il_340x270.5853630150_4zbk.jpg">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="Test\Listings_files\il_340x270.5859199944_l4ko.jpg">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="Test\Listings_files\il_340x270.5859234326_m1ub.jpg">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="Test\Listings_files\il_340x270.5859282622_ta72.jpg">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="Test\Listings_files\il_340x270.5859326334_1ctw.jpg">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="Test\Listings_files\il_340x270.5859329456_fmfa.jpg">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="Test\Listings_files\il_340x270.5862032931_54vz.jpg">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="Test\Listings_files\il_340x270.5869224046_qorv.jpg">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="Test\Listings_files\il_340x270.5883856001_qat4.jpg">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="Test\Listings_files\il_340x270.5883905621_29ho.jpg">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="Test\Listings_files\il_340x270.5901656729_4373.jpg">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="Test\Listings_files\il_340x270.5901685307_pvc7.jpg">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="Test\Listings_files\il_340x270.5901784567_ca6v.jpg">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="Test\Listings_files\il_340x270.5901805199_kbju.jpg">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="Test\Listings_files\il_340x270.5901823785_birw.jpg">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="Test\Listings_files\il_340x270.5907252891_1812.jpg">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="Test\Listings_files\il_340x270.5907267697_nnnh.jpg">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="Test\Listings_files\il_340x270.5907284187_44ry.jpg">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="Test\Listings_files\il_340x270.5907378913_8otp.jpg">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="Test\Listings_files\il_340x270.5917235537_99on.jpg">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="Test\Listings_files\il_340x270.5917265473_t67q.jpg">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="Test\Listings_files\il_340x270.5917386707_jkay.jpg">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="Test\Listings_files\iusa_75x75.104442058_4251.jpg">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="Test\Listings_files\ListingsManager.b852720deaeea66ef634.js.Без названия">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="Test\Listings_files\overrides.50213939d65946.css">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="Test\Listings_files\pattern-channel-inactive.svg">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="Test\Listings_files\polyfill.min.js.Без названия">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="Test\Listings_files\sdk.js.Без названия">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="Test\Listings_files\settings-overlay.50213939d65946.css">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="Test\Listings_files\shop_manager.001.svg">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="Test\Listings_files\start-use-shared-lib.ba47aa8ca6e159b2f400.js.Без названия">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="Test\Listings_files\subway.50213939d65946.css">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="Test\Listings_files\toolbar.50213939d65946.css">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="Test\Listings_files\vendor_bundle.6d800a2a78ce383b6118.js.Без названия">
+        <None Update="google-credentials.staging.json">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
       <None Update="appsettings.json">
@@ -215,6 +45,12 @@
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
       <None Update="appsettings.Staging.secrets.json">
+          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+        <None Update=".env.production">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Update=".env.staging">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
     </ItemGroup>

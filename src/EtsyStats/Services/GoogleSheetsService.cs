@@ -1,22 +1,27 @@
 using EtsyStats.Attributes;
+using EtsyStats.Models.Options;
 using Google.Apis.Auth.OAuth2;
 using Google.Apis.Services;
 using Google.Apis.Sheets.v4;
 using Google.Apis.Sheets.v4.Data;
-using Newtonsoft.Json;
 
 namespace EtsyStats.Services;
 
 public class GoogleSheetService
 {
-    // TODO put in appsettings.json
-    private const string GoogleCredentialsFileName = "google-credentials.json";
     private const string RowsDimension = "ROWS";
     private static readonly string[] Scopes = { SheetsService.Scope.Spreadsheets };
 
+    private readonly GoogleSheetsOptions _googleSheetsOptions;
+
+    public GoogleSheetService(GoogleSheetsOptions googleSheetsOptions)
+    {
+        _googleSheetsOptions = googleSheetsOptions;
+    }
+
     private SheetsService InitSheetsService()
     {
-        using var stream = new FileStream(GoogleCredentialsFileName, FileMode.Open, FileAccess.Read);
+        using var stream = new FileStream(_googleSheetsOptions.GoogleCredentialsFileName!, FileMode.Open, FileAccess.Read);
         var serviceInitializer = new BaseClientService.Initializer
         {
             HttpClientInitializer = GoogleCredential.FromStream(stream).CreateScoped(Scopes)
@@ -139,13 +144,6 @@ public class GoogleSheetService
         using var sheetsService = InitSheetsService();
         var spreadsheet = sheetsService.Spreadsheets.Get(spreadsheetId).Execute();
         return spreadsheet.Sheets.Any(s => s.Properties.Title == sheetName);
-    }
-
-    private int GetSheetId(SheetsService service, string spreadsheetId, string sheetName)
-    {
-        var spreadsheet = service.Spreadsheets.Get(spreadsheetId).Execute();
-        var sheet = spreadsheet.Sheets.First(s => s.Properties.Title == sheetName);
-        return sheet.Properties.SheetId!.Value;
     }
 
     private string GetRange(string tabName, int columnsCount, int rowsCount, int firstColumnIndex = 0)

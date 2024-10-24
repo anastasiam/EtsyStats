@@ -26,11 +26,6 @@ public abstract class EtsyUrl
         return $"https://www.etsy.com/your/shops/me/listing-editor/edit/{id}";
     }
 
-    public static string SearchAnalytics(DateRange dateRange)
-    {
-        return $"https://www.etsy.com/your/shops/me/search-analytics?{DateRangeQueryParameter.GetQueryAnalytics(dateRange)}";
-    }
-
     public static string GetListingIdFromLink(string url)
     {
         return url.Split(UrlSeparator).ToList().Last();

@@ -2,6 +2,8 @@
 
 using System.Diagnostics;
 using System.Globalization;
+using DotNetEnv;
+using EtsyStats.Factories;
 using EtsyStats.Helpers;
 using EtsyStats.Models;
 using EtsyStats.Models.Enums;
@@ -20,95 +22,58 @@ public static class Program
     {
         try
         {
-            var exit = false;
-
-            Startup.SetupLogs();
-
-            // TODO var environmentName = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT");
-            var environmentName = "Production";
-
-            var builder = new ConfigurationBuilder()
-                .AddJsonFile("appsettings.json", true, false)
-                .AddJsonFile("appsettings.secrets.json", true, false)
-                .AddJsonFile($"appsettings.{environmentName}.json", true, false)
-                .AddJsonFile($"appsettings.{environmentName}.secrets.json", true, false)
-                .AddEnvironmentVariables();
-
-            var configuration = builder.Build();
-
-            var applicationOptions = configuration.GetSection(ApplicationOptions.SectionName).Get<ApplicationOptions>();
-            // TODO Use Configuration Options instead of Settings
-            // var configurationOptions = configuration.GetSection(ConfigurationOptions.SectionName).Get<ConfigurationOptions>();
-            var googleChromeOptions = configuration.GetSection(GoogleChromeOptions.SectionName).Get<GoogleChromeOptions>();
-            var googleSheetsOptions = configuration.GetSection(GoogleSheetsOptions.SectionName).Get<GoogleSheetsOptions>();
-
-            if (googleSheetsOptions is null
-                || googleChromeOptions is null
-                || applicationOptions is null)
+            SetupLogs();
+            var environmentSetResult = await SetEnvironment();
+            if (!environmentSetResult)
             {
-                Console.WriteLine("\nCan't load configurations. Please contact the support.\n\n");
-                await Log.ErrorAsync("Application options, Google Chrome options or Google Sheets options are null. Exiting.");
+                await Log.ErrorAsync("Error on setting environment.");
+                Console.WriteLine("\nCan't load configurations. Please contact the support.\nPress any key to exit...");
+                Console.ReadKey();
+                await Log.InfoAndConsoleAsync("Exiting...");
                 return;
             }
 
+            var (applicationOptions, configurationOptions, googleChromeOptions, googleSheetsOptions) = BuildConfiguration();
+
+            if (applicationOptions is null
+                || configurationOptions is null
+                || googleChromeOptions is null
+                || googleSheetsOptions is null)
+            {
+                await Log.ErrorAsync("Error on building configuration. ApplicationOptions, ConfigurationOptions, GoogleChromeOptions or GoogleSheetsOptions are null.");
+                Console.WriteLine("\nCan't load configurations. Please contact the support.\nPress any key to exit...");
+                Console.ReadKey();
+                await Log.InfoAndConsoleAsync("Exiting...");
+                return;
+            }
+            
             CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
 
-            var config = FirstTimeLaunchSetUserConfiguration(applicationOptions);
-            Console.WriteLine($"Shop: {config.ShopName}");
+            var userConfiguration = FirstTimeLaunchSetUserConfiguration(applicationOptions);
+            await Log.InfoAndConsoleAsync($"Shop: {userConfiguration.ShopName}");
 
-            // TODO add DI
-            var googleSheetsService = new GoogleSheetService();
-            var etsyDataUploadService = new EtsyDataUploadService(config, googleSheetsService);
+            // TODO: add DI
+            var googleSheetsService = new GoogleSheetService(googleSheetsOptions);
+            var etsyDataUploadService = new EtsyDataUploadService(userConfiguration, googleSheetsService);
             var directoryHelper = new DirectoryHelper();
-            var etsyParser = new EtsyParser(directoryHelper);
+            var webScrapingServiceFactory = new WebScrapingServiceFactory();
+            var etsyParser = new EtsyParser(directoryHelper, webScrapingServiceFactory, configurationOptions);
+
+            var exit = false;
             do
             {
                 try
                 {
                     Console.WriteLine(
                         "\nPlease select an action that you would like to do:" +
-                        "\n1 - Upload listings stats");
-                    // "\n0 - Exit the program");
+                        "\n1 - Upload listings stats" +
+                        "\n0 - Exit the program");
                     var command = Console.ReadLine();
                     switch (command)
                     {
                         case "1":
                         {
-                            var dateRange = GetDateRangeStats();
-
-                            await Log.InfoAndConsoleAsync("Getting listings stats from Etsy...\n");
-                            var statistic = await etsyParser.GetListingsStatistics(dateRange);
-
-                            if (statistic?.ListingStatistics is null)
-                            {
-                                Console.WriteLine("\nThere was an error trying to get Listings Statistics.");
-                                await Log.ErrorAsync("Error on parsing listings stats, statistic?.ListingStatistics is null.");
-                                break;
-                            }
-
-                            await Log.InfoAndConsoleAsync("Writing Listings Stats to Google Sheets...");
-                            await etsyDataUploadService.WriteListingsStatisticsToGoogleSheet(googleSheetsOptions.SpreadsheetId!, statistic.ListingStatistics);
-                            await Log.InfoAndConsoleAsync("Listings Stats were uploaded successfully.");
-
-                            if (statistic.SearchTermStatistics is null)
-                            {
-                                Console.WriteLine("\nThere was an error trying to calculate Search Terms Summary. Skipping writing Summary to Google Sheets.");
-                                await Log.ErrorAsync("Error on parsing listings stats, SearchTermsSummary is null.");
-                                break;
-                            }
-
-                            if (statistic.TagStatistics is null)
-                            {
-                                Console.WriteLine("\nThere was an error trying to calculate Tags Summary. Skipping writing Summary to Google Sheets.");
-                                await Log.ErrorAsync("Error on parsing listings stats, TagsSummary is null.");
-                                break;
-                            }
-
-                            await Log.InfoAndConsoleAsync("Writing Summary Statistic to Google Sheets...");
-                            await etsyDataUploadService.WriteStatisticSummaryToGoogleSheet(googleSheetsOptions.SpreadsheetId!, statistic.SearchTermStatistics, statistic.TagStatistics);
-                            await Log.InfoAndConsoleAsync("Summary Statistic was uploaded successfully.");
-
-                            await googleSheetsService.SortSheetsAscending(googleSheetsOptions.SpreadsheetId!);
+                            await UploadListingsStats(etsyParser, etsyDataUploadService, googleSheetsOptions, googleSheetsService);
 
                             break;
                         }
@@ -122,8 +87,8 @@ public static class Program
                     if (e.Message.Contains("This version of ChromeDriver only supports Chrome version"))
                     {
                         var chromeVersion = FileVersionInfo.GetVersionInfo(googleChromeOptions.ChromeLocation!).FileVersion;
-                        await Log.InfoAsync(e.ToString());
                         await Log.InfoAndConsoleAsync($"The version of Google Chrome ({chromeVersion}) is different from the version of EtsyStats.");
+                        await Log.InfoAsync(e.ToString());
                     }
                     else
                     {
@@ -151,12 +116,71 @@ public static class Program
         }
         catch (Exception e)
         {
-            Console.WriteLine("\nSomething went wrong. Unexpected error has occured :(\n\n");
+            Console.WriteLine("\nSomething went wrong. Unexpected error has occured :(\nPress any key to exit...");
             await Log.ErrorAsync(e.ToString());
+            Console.ReadKey();
         }
 
-        Console.ReadLine();
+        await Log.InfoAndConsoleAsync("Exiting...");
     }
+
+    #region Set up
+
+    private static void SetupLogs()
+    {
+        Directory.CreateDirectory("logs");
+        File.AppendAllText("logs/logs.txt", $"\r\n------------{DateTime.Now}------------\r\n");
+    }
+
+    private static async Task<bool> SetEnvironment()
+    {
+        var envFiles = Directory.GetFiles(Directory.GetCurrentDirectory(), ".env.*");
+
+        if (!envFiles.Any())
+        {
+            await Log.ErrorAsync("No environment files found starting with .env.");
+            return false;
+        }
+
+        var selectedEnvFile = envFiles.First();
+        await Log.InfoAsync($"Loading environment file: {selectedEnvFile}");
+        Env.Load(selectedEnvFile);
+
+        var environment = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT");
+        if (environment == null)
+        {
+            await Log.ErrorAsync("DOTNET_ENVIRONMENT variable was not found in the env file.");
+            return false;
+        }
+
+        await Log.InfoAsync($"Environment: {environment}");
+        return true;
+    }
+
+    private static (ApplicationOptions? applicationOptions, ConfigurationOptions? configurationOptions, GoogleChromeOptions? googleChromeOptions, GoogleSheetsOptions? googleSheetsOptions) BuildConfiguration()
+    {
+        var environmentName = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT");
+        var builder = new ConfigurationBuilder()
+            .AddJsonFile("appsettings.json", true, false)
+            .AddJsonFile("appsettings.secrets.json", true, false)
+            .AddJsonFile($"appsettings.{environmentName}.json", true, false)
+            .AddJsonFile($"appsettings.{environmentName}.secrets.json", true, false)
+            .AddEnvironmentVariables();
+
+        var configuration = builder.Build();
+
+        var applicationOptions = configuration.GetSection(ApplicationOptions.SectionName).Get<ApplicationOptions>();
+        var configurationOptions = configuration.GetSection(ConfigurationOptions.SectionName).Get<ConfigurationOptions>();
+        var googleChromeOptions = configuration.GetSection(GoogleChromeOptions.SectionName).Get<GoogleChromeOptions>();
+        var googleSheetsOptions = configuration.GetSection(GoogleSheetsOptions.SectionName).Get<GoogleSheetsOptions>();
+
+        if (googleSheetsOptions is not null)
+            googleSheetsOptions.GoogleCredentialsFileName = googleSheetsOptions.GoogleCredentialsFileName?.Replace("[ENV]", environmentName?.ToLower());
+
+        return (applicationOptions, configurationOptions, googleChromeOptions, googleSheetsOptions);
+    }
+
+    #endregion
 
     private static UserConfiguration FirstTimeLaunchSetUserConfiguration(ApplicationOptions applicationOptions)
     {
@@ -167,7 +191,7 @@ public static class Program
         if (!File.Exists(configFileName))
         {
             Directory.CreateDirectory($"{appDataFolder}/{applicationOptions.UserDataDirectory}");
-            Console.WriteLine("\nYou're using EtsyStats for the firs time. " +
+            Console.WriteLine("\nYou're using EtsyStats for the first time. " +
                               "Lets set you up. Please type following data bellow." +
                               "\nYour shop name:");
             var shopName = Console.ReadLine();
@@ -186,7 +210,7 @@ public static class Program
         return userConfiguration;
     }
 
-    private static DateRange GetDateRangeStats()
+    private static async Task<DateRange> GetDateRangeStats()
     {
         Console.WriteLine("\nPlease select the date range:");
         Console.WriteLine("1 - Last 30 days");
@@ -199,26 +223,65 @@ public static class Program
         switch (dateRangeCommand)
         {
             case "1":
-                Console.WriteLine("\nGetting data for the last 30 days");
+                await Log.InfoAndConsoleAsync("\nGetting data for the last 30 days");
                 return DateRange.Last30Days;
             case "2":
-                Console.WriteLine("\nGetting data for this month");
+                await Log.InfoAndConsoleAsync("\nGetting data for this month");
                 return DateRange.ThisMonth;
             case "3":
-                Console.WriteLine("\nGetting data for this year");
+                await Log.InfoAndConsoleAsync("\nGetting data for this year");
                 return DateRange.ThisYear;
             case "4":
-                Console.WriteLine("\nGetting data for the last year");
+                await Log.InfoAndConsoleAsync("\nGetting data for the last year");
                 return DateRange.LastYear;
             case "5":
-                Console.WriteLine("\nGetting data for all time");
+                await Log.InfoAndConsoleAsync("\nGetting data for all time");
                 return DateRange.AllTime;
             default:
-                Console.WriteLine("\nUnknown command, please try again.");
-                GetDateRangeStats();
+                await Log.InfoAndConsoleAsync("\nUnknown command, please try again.");
+                await GetDateRangeStats();
                 break;
         }
 
         return DateRange.Unknown;
+    }
+
+    private static async Task UploadListingsStats(EtsyParser etsyParser, EtsyDataUploadService etsyDataUploadService, GoogleSheetsOptions googleSheetsOptions, GoogleSheetService googleSheetsService)
+    {
+        var dateRange = await GetDateRangeStats();
+
+        await Log.InfoAndConsoleAsync("Getting listings stats from Etsy...\n");
+        var statistic = await etsyParser.GetListingsStatistics(dateRange);
+
+        if (statistic?.ListingStatistics is null)
+        {
+            Console.WriteLine("\nThere was an error trying to get Listings Statistics.");
+            await Log.ErrorAsync("Error on parsing listings stats, statistic?.ListingStatistics is null.");
+            return;
+        }
+
+        await Log.InfoAndConsoleAsync("Writing Listings Stats to Google Sheets...");
+        await etsyDataUploadService.WriteListingsStatisticsToGoogleSheet(googleSheetsOptions.SpreadsheetId!, statistic.ListingStatistics);
+        await Log.InfoAndConsoleAsync("Listings Stats were uploaded successfully.");
+
+        if (statistic.SearchTermStatistics is null)
+        {
+            Console.WriteLine("\nThere was an error trying to calculate Search Terms Summary. Skipping writing Summary to Google Sheets.");
+            await Log.ErrorAsync("Error on parsing listings stats, SearchTermsSummary is null.");
+            return;
+        }
+
+        if (statistic.TagStatistics is null)
+        {
+            Console.WriteLine("\nThere was an error trying to calculate Tags Summary. Skipping writing Summary to Google Sheets.");
+            await Log.ErrorAsync("Error on parsing listings stats, TagsSummary is null.");
+            return;
+        }
+
+        await Log.InfoAndConsoleAsync("Writing Summary Statistic to Google Sheets...");
+        await etsyDataUploadService.WriteStatisticSummaryToGoogleSheet(googleSheetsOptions.SpreadsheetId!, statistic.SearchTermStatistics, statistic.TagStatistics);
+        await Log.InfoAndConsoleAsync("Summary Statistic was uploaded successfully.");
+
+        await googleSheetsService.SortSheetsAscending(googleSheetsOptions.SpreadsheetId!);
     }
 }

@@ -13,4 +13,8 @@ obj/
 
 # Secrets
 *.secrets.json
-google-credentials*
+google-credentials.*.json
+
+# .env files
+.env
+.env.*

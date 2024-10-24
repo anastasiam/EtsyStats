@@ -1,8 +1,10 @@
 using EtsyStats.Constants.Etsy;
 using EtsyStats.Extensions;
+using EtsyStats.Factories;
 using EtsyStats.Helpers;
 using EtsyStats.Models;
 using EtsyStats.Models.Enums;
+using EtsyStats.Models.Options;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Support.UI;
 using Selenium.Extensions;
@@ -25,17 +27,22 @@ public class EtsyParser
     private const string Value = "value";
     
     private readonly DirectoryHelper _directoryHelper;
+    private readonly WebScrapingServiceFactory _webScrapingServiceFactory;
+    private readonly ConfigurationOptions _configurationOptions;
 
-    public EtsyParser(DirectoryHelper directoryHelper)
+    public EtsyParser(DirectoryHelper directoryHelper,
+        WebScrapingServiceFactory webScrapingServiceFactory,
+        ConfigurationOptions configurationOptions)
     {
         _directoryHelper = directoryHelper;
+        _webScrapingServiceFactory = webScrapingServiceFactory;
+        _configurationOptions = configurationOptions;
     }
 
     public async Task<Statistic?> GetListingsStatistics(DateRange dateRange)
     {
         using var chromeDriver = GetUndetectedChromeDriver();
-        using var webScrapingService = new WebScrapingService(chromeDriver);
-
+        using var webScrapingService = _webScrapingServiceFactory.Create(chromeDriver, _configurationOptions);
         var statistic = new Statistic { ListingStatistics = new List<ListingStatistic>() };
 
         for (var page = 1;; page++)
